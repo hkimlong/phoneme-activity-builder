@@ -102,8 +102,11 @@ export default function AboutPage() {
           the standalone HTML files.
         </p>
 
-        <div className="video-placeholder">
-          <p>Instructional video will be added here.</p>
+        <div className="about-video">
+          <video controls width="100%">
+            <source src="/videos/instructions.mp4" type="video/mp4" />
+            Your browser does not support the video element.
+          </video>
         </div>
       </div>
 

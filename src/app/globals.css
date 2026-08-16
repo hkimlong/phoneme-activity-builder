@@ -1235,3 +1235,17 @@ html[data-theme="dark"] {
 .about-card p {
   margin: 6px 0;
 }
+
+.about-video {
+  margin-top: 20px;
+}
+
+.about-video video {
+  display: block;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
