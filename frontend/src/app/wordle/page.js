@@ -1,7 +1,14 @@
 "use client";
 
+import {
+  getWordLists,
+  getActivities,
+  createWord,
+  createActivity,
+} from "@/functions/api";
 import { useEffect, useState } from "react";
 import { generateWordleHTML } from "@/functions/generateHTML";
+
 
 export default function WordlePage() {
   const [phonemeWord, setPhonemeWord] = useState("");
@@ -21,15 +28,7 @@ export default function WordlePage() {
 useEffect(() => {
   async function loadSavedActivities() {
     try {
-      const response = await fetch(
-        "http://localhost:4080/api/activities?type=WORDLE"
-      );
-
-      if (!response.ok) {
-        throw new Error("Could not load saved activities");
-      }
-
-      const activities = await response.json();
+      const activities = await getActivities("WORDLE");
 
       setSavedActivities(activities);
       console.log("Loaded Wordle activities:", activities);
@@ -60,15 +59,7 @@ async function saveWordleActivity() {
     }
 
     // Get the available word lists.
-    const wordListResponse = await fetch(
-      "http://localhost:4080/api/word-lists"
-    );
-
-    if (!wordListResponse.ok) {
-      throw new Error("Could not load word lists");
-    }
-
-    const wordLists = await wordListResponse.json();
+    const wordLists = await getWordLists();
 
     if (wordLists.length === 0) {
       setSaveMessage("Please create a word list first.");
@@ -78,52 +69,22 @@ async function saveWordleActivity() {
     const wordListId = wordLists[0].id;
 
     // Save the English word and its phonemes.
-    const wordResponse = await fetch(
-      "http://localhost:4080/api/words",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          englishWord: englishWord.trim(),
-          phonemes: phonemes,
-          wordListId: wordListId,
-        }),
-      }
-    );
-
-    if (!wordResponse.ok) {
-      throw new Error("Could not save word");
-    }
-
-    const savedWord = await wordResponse.json();
+    const savedWord = await createWord({
+     englishWord: englishWord.trim(),
+     phonemes: phonemes,
+     wordListId: wordListId,
+    });
 
     // Save the Wordle activity configuration.
-    const activityResponse = await fetch(
-      "http://localhost:4080/api/activities",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: `${englishWord.trim()} Wordle`,
-          type: "WORDLE",
-          difficulty: difficulty.toUpperCase(),
-          showHints: showHints === "yes",
-          numberOfGuesses: Number(guesses),
-          wordListId: wordListId,
-          wordId: savedWord.id,
-        }),
-      }
-    );
-
-    if (!activityResponse.ok) {
-      throw new Error("Could not save activity");
-    }
-
-    const savedActivity = await activityResponse.json();
+    const savedActivity = await createActivity({
+     name: `${englishWord.trim()} Wordle`,
+     type: "WORDLE",
+     difficulty: difficulty.toUpperCase(),
+     showHints: showHints === "yes",
+     numberOfGuesses: Number(guesses),
+     wordListId: wordListId,
+     wordId: savedWord.id,
+    });
 
     setSavedActivities((currentActivities) => [
       savedActivity,
@@ -309,15 +270,7 @@ function loadActivityIntoPreview(activityId) {
               className="generate-button"
               onClick={async () => {
                 try {
-                  const response = await fetch(
-                    "http://localhost:4080/api/activities?type=WORDLE"
-                  );
-
-                  if (!response.ok) {
-                    throw new Error("Could not load saved Wordle activity");
-                  }
-
-                  const activities = await response.json();
+                  const activities = await getActivities("WORDLE");
 
                   if (activities.length === 0) {
                     alert("No saved Wordle activity found.");

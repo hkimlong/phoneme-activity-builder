@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { generateWordSearchHTML } from "@/functions/generateHTML";
 import { generateWordSearchGrid } from "@/functions/generateWordSearchGrid";
 
@@ -17,6 +17,38 @@ export default function WordSearchPage() {
   ]);
 
   const [puzzle, setPuzzle] = useState(null);
+  const [saveMessage, setSaveMessage] = useState("");
+  const [savedActivities, setSavedActivities] = useState([]);
+  const [selectedActivityId, setSelectedActivityId] = useState("");
+
+  useEffect(() => {
+    async function loadSavedActivities() {
+      try {
+        const response = await fetch(
+          "http://localhost:4080/api/activities?type=WORD_SEARCH"
+        );
+
+        if (!response.ok) {
+          throw new Error("Could not load saved Word Search activities");
+        }
+
+        const activities = await response.json();
+
+        setSavedActivities(activities);
+
+        if (activities.length > 0) {
+          setSelectedActivityId(activities[0].id);
+        }
+      } catch (error) {
+        console.error(
+          "Failed to load saved Word Search activities:",
+          error
+        );
+      }
+    }
+
+    loadSavedActivities();
+  }, []);
 
   function updateWord(index, field, value) {
     const updatedWords = [...words];
@@ -228,12 +260,3 @@ export default function WordSearchPage() {
   );
 }
 
-  function regenerateGrid() {
-  const newPuzzle = generateWordSearchGrid(
-    words,
-    difficulty,
-    gridSize
-  );
-
-  setPuzzle(newPuzzle);
-}
