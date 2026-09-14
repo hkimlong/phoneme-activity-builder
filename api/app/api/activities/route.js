@@ -25,6 +25,15 @@ export async function GET(request) {
           }
         : {},
       include: {
+        word: {
+          include: {
+            phonemes: {
+              orderBy: {
+                position: "asc",
+              },
+            },
+          },
+        },
         wordList: {
           include: {
             words: {
@@ -44,13 +53,21 @@ export async function GET(request) {
       },
     });
 
-    return Response.json(activities, { status: 200, headers: corsHeaders, });
+    return Response.json(activities, {
+      status: 200,
+      headers: corsHeaders,
+    });
   } catch (error) {
     console.error("Failed to get activities:", error);
 
     return Response.json(
-      { error: "Failed to get activities" },
-      { status: 500 }
+      {
+        error: "Failed to get activities",
+      },
+      {
+        status: 500,
+        headers: corsHeaders,
+      }
     );
   }
 }
@@ -61,29 +78,49 @@ export async function POST(request) {
 
     if (!body.name || body.name.trim() === "") {
       return Response.json(
-        { error: "Activity name is required" },
-        { status: 400 }
+        {
+          error: "Activity name is required",
+        },
+        {
+          status: 400,
+          headers: corsHeaders,
+        }
       );
     }
 
     if (!["WORDLE", "WORD_SEARCH"].includes(body.type)) {
       return Response.json(
-        { error: "Activity type must be WORDLE or WORD_SEARCH" },
-        { status: 400 }
+        {
+          error: "Activity type must be WORDLE or WORD_SEARCH",
+        },
+        {
+          status: 400,
+          headers: corsHeaders,
+        }
       );
     }
 
     if (!["EASY", "MEDIUM", "HARD"].includes(body.difficulty)) {
       return Response.json(
-        { error: "Difficulty must be EASY, MEDIUM or HARD" },
-        { status: 400 }
+        {
+          error: "Difficulty must be EASY, MEDIUM or HARD",
+        },
+        {
+          status: 400,
+          headers: corsHeaders,
+        }
       );
     }
 
     if (!body.wordListId) {
       return Response.json(
-        { error: "Word list ID is required" },
-        { status: 400 }
+        {
+          error: "Word list ID is required",
+        },
+        {
+          status: 400,
+          headers: corsHeaders,
+        }
       );
     }
 
@@ -94,23 +131,45 @@ export async function POST(request) {
         difficulty: body.difficulty,
         showHints: body.showHints ?? true,
         numberOfGuesses:
-          body.type === "WORDLE" ? body.numberOfGuesses ?? 6 : null,
+          body.type === "WORDLE"
+            ? Number(body.numberOfGuesses ?? 6)
+            : null,
         gridSize:
-          body.type === "WORD_SEARCH" ? body.gridSize ?? 10 : null,
+          body.type === "WORD_SEARCH"
+            ? Number(body.gridSize ?? 10)
+            : null,
         wordListId: body.wordListId,
+        wordId: body.wordId || null,
       },
       include: {
+        word: {
+          include: {
+            phonemes: {
+              orderBy: {
+                position: "asc",
+              },
+            },
+          },
+        },
         wordList: true,
       },
     });
 
-    return Response.json(activity, { status: 201, headers: corsHeaders, });
+    return Response.json(activity, {
+      status: 201,
+      headers: corsHeaders,
+    });
   } catch (error) {
     console.error("Failed to create activity:", error);
 
     return Response.json(
-      { error: "Failed to create activity" },
-      { status: 500 }
+      {
+        error: "Failed to create activity",
+      },
+      {
+        status: 500,
+        headers: corsHeaders,
+      }
     );
   }
 }
@@ -123,29 +182,49 @@ export async function PATCH(request) {
 
     if (!id) {
       return Response.json(
-        { error: "Activity ID is required" },
-        { status: 400 }
+        {
+          error: "Activity ID is required",
+        },
+        {
+          status: 400,
+          headers: corsHeaders,
+        }
       );
     }
 
     if (!body.name || body.name.trim() === "") {
       return Response.json(
-        { error: "Activity name is required" },
-        { status: 400 }
+        {
+          error: "Activity name is required",
+        },
+        {
+          status: 400,
+          headers: corsHeaders,
+        }
       );
     }
 
     if (!["WORDLE", "WORD_SEARCH"].includes(body.type)) {
       return Response.json(
-        { error: "Activity type must be WORDLE or WORD_SEARCH" },
-        { status: 400 }
+        {
+          error: "Activity type must be WORDLE or WORD_SEARCH",
+        },
+        {
+          status: 400,
+          headers: corsHeaders,
+        }
       );
     }
 
     if (!["EASY", "MEDIUM", "HARD"].includes(body.difficulty)) {
       return Response.json(
-        { error: "Difficulty must be EASY, MEDIUM or HARD" },
-        { status: 400 }
+        {
+          error: "Difficulty must be EASY, MEDIUM or HARD",
+        },
+        {
+          status: 400,
+          headers: corsHeaders,
+        }
       );
     }
 
@@ -159,22 +238,44 @@ export async function PATCH(request) {
         difficulty: body.difficulty,
         showHints: body.showHints ?? true,
         numberOfGuesses:
-          body.type === "WORDLE" ? body.numberOfGuesses ?? 6 : null,
+          body.type === "WORDLE"
+            ? Number(body.numberOfGuesses ?? 6)
+            : null,
         gridSize:
-          body.type === "WORD_SEARCH" ? body.gridSize ?? 10 : null,
+          body.type === "WORD_SEARCH"
+            ? Number(body.gridSize ?? 10)
+            : null,
+        wordId: body.wordId || null,
       },
       include: {
+        word: {
+          include: {
+            phonemes: {
+              orderBy: {
+                position: "asc",
+              },
+            },
+          },
+        },
         wordList: true,
       },
     });
 
-    return Response.json(activity, { status: 200 });
+    return Response.json(activity, {
+      status: 200,
+      headers: corsHeaders,
+    });
   } catch (error) {
     console.error("Failed to update activity:", error);
 
     return Response.json(
-      { error: "Failed to update activity" },
-      { status: 500 }
+      {
+        error: "Failed to update activity",
+      },
+      {
+        status: 500,
+        headers: corsHeaders,
+      }
     );
   }
 }
@@ -186,8 +287,13 @@ export async function DELETE(request) {
 
     if (!id) {
       return Response.json(
-        { error: "Activity ID is required" },
-        { status: 400 }
+        {
+          error: "Activity ID is required",
+        },
+        {
+          status: 400,
+          headers: corsHeaders,
+        }
       );
     }
 
@@ -198,15 +304,25 @@ export async function DELETE(request) {
     });
 
     return Response.json(
-      { message: "Activity deleted successfully" },
-      { status: 200 }
+      {
+        message: "Activity deleted successfully",
+      },
+      {
+        status: 200,
+        headers: corsHeaders,
+      }
     );
   } catch (error) {
     console.error("Failed to delete activity:", error);
 
     return Response.json(
-      { error: "Failed to delete activity" },
-      { status: 500 }
+      {
+        error: "Failed to delete activity",
+      },
+      {
+        status: 500,
+        headers: corsHeaders,
+      }
     );
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { generateWordleHTML } from "@/functions/generateHTML";
 
 export default function WordlePage() {
@@ -10,11 +10,40 @@ export default function WordlePage() {
   const [showHints, setShowHints] = useState("yes");
   const [guesses, setGuesses] = useState(6);
   const [saveMessage, setSaveMessage] = useState("");
+  const [savedActivities, setSavedActivities] = useState([]);
+  const [selectedActivityId, setSelectedActivityId] = useState("");
 
   const phonemes = phonemeWord
     .trim()
     .split(/\s+/)
     .filter((item) => item.length > 0);
+
+useEffect(() => {
+  async function loadSavedActivities() {
+    try {
+      const response = await fetch(
+        "http://localhost:4080/api/activities?type=WORDLE"
+      );
+
+      if (!response.ok) {
+        throw new Error("Could not load saved activities");
+      }
+
+      const activities = await response.json();
+
+      setSavedActivities(activities);
+      console.log("Loaded Wordle activities:", activities);
+
+      if (activities.length > 0) {
+        setSelectedActivityId(activities[0].id);
+      }
+    } catch (error) {
+      console.error("Failed to load saved Wordle activities:", error);
+    }
+  }
+
+  loadSavedActivities();
+}, []); 
 
 async function saveWordleActivity() {
   try {
@@ -68,6 +97,8 @@ async function saveWordleActivity() {
       throw new Error("Could not save word");
     }
 
+    const savedWord = await wordResponse.json();
+
     // Save the Wordle activity configuration.
     const activityResponse = await fetch(
       "http://localhost:4080/api/activities",
@@ -83,6 +114,7 @@ async function saveWordleActivity() {
           showHints: showHints === "yes",
           numberOfGuesses: Number(guesses),
           wordListId: wordListId,
+          wordId: savedWord.id,
         }),
       }
     );
@@ -91,11 +123,52 @@ async function saveWordleActivity() {
       throw new Error("Could not save activity");
     }
 
+    const savedActivity = await activityResponse.json();
+
+    setSavedActivities((currentActivities) => [
+      savedActivity,
+      ...currentActivities,
+    ]);
+
+    setSelectedActivityId(savedActivity.id);
+
     setSaveMessage("Wordle activity saved successfully.");
   } catch (error) {
     console.error("Failed to save Wordle activity:", error);
     setSaveMessage("Failed to save Wordle activity.");
   }
+}
+
+function loadActivityIntoPreview(activityId) {
+  setSelectedActivityId(activityId);
+
+  const activity = savedActivities.find(
+    (item) => item.id === activityId
+  );
+
+  if (!activity) {
+    return;
+  }
+
+  if (!activity.word) {
+    setSaveMessage(
+      "This older activity is not linked to a specific word."
+    );
+    return;
+  }
+
+  const phonemeText = activity.word.phonemes
+    .sort((a, b) => a.position - b.position)
+    .map((phoneme) => phoneme.symbol)
+    .join(" ");
+
+  setPhonemeWord(phonemeText);
+  setEnglishWord(activity.word.englishWord);
+  setDifficulty(activity.difficulty.toLowerCase());
+  setShowHints(activity.showHints ? "yes" : "no");
+  setGuesses(activity.numberOfGuesses ?? 6);
+
+  setSaveMessage("");
 }
 
   return (
@@ -204,6 +277,27 @@ async function saveWordleActivity() {
               onChange={(e) => setGuesses(e.target.value)}
             />
           </div>
+
+          <div className="form-row">
+            <label htmlFor="savedActivity">Saved Activity:</label>
+
+            <select
+              id="savedActivity"
+              value={selectedActivityId}
+              onChange={(e) => loadActivityIntoPreview(e.target.value)}
+            >
+              {savedActivities.length === 0 ? (
+                <option value="">No saved activities</option>
+              ) : (
+                savedActivities.map((activity) => (
+                  <option key={activity.id} value={activity.id}>
+                    {activity.name}
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
+
         </div>
 
         <div className="preview-panel">
@@ -230,18 +324,23 @@ async function saveWordleActivity() {
                     return;
                   }
 
-                  const savedActivity = activities[0];
+                  const savedActivity = activities.find(
+                    (activity) => activity.id === selectedActivityId
+                  );
 
-                  if (
-                    !savedActivity.wordList ||
-                    !savedActivity.wordList.words ||
-                    savedActivity.wordList.words.length === 0
-                  ) {
-                    alert("The saved activity does not contain any words.");
+                  if (!savedActivity) {
+                    alert("Please select a saved Wordle activity.");
                     return;
                   }
 
-                  const savedWord = savedActivity.wordList.words[0];
+                if (!savedActivity.word) {
+                    alert(
+                      "This older activity is not linked to a specific word. Please save a new activity."
+                    );
+                    return;
+                  }
+
+                  const savedWord = savedActivity.word;
 
                   const savedPhonemeWord = savedWord.phonemes
                     .sort((a, b) => a.position - b.position)
