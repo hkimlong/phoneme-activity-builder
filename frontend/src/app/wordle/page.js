@@ -9,11 +9,60 @@ export default function WordlePage() {
   const [difficulty, setDifficulty] = useState("easy");
   const [showHints, setShowHints] = useState("yes");
   const [guesses, setGuesses] = useState(6);
+  const [saveMessage, setSaveMessage] = useState("");
 
   const phonemes = phonemeWord
     .trim()
     .split(/\s+/)
     .filter((item) => item.length > 0);
+
+async function saveWordleActivity() {
+  try {
+    setSaveMessage("");
+
+    const wordListResponse = await fetch(
+      "http://localhost:4080/api/word-lists"
+    );
+
+    if (!wordListResponse.ok) {
+      throw new Error("Could not load word lists");
+    }
+
+    const wordLists = await wordListResponse.json();
+
+    if (wordLists.length === 0) {
+      setSaveMessage("Please create a word list first.");
+      return;
+    }
+
+    const activityResponse = await fetch(
+      "http://localhost:4080/api/activities",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: `${englishWord || "Wordle"} Activity`,
+          type: "WORDLE",
+          difficulty: difficulty.toUpperCase(),
+          showHints: showHints === "yes",
+          numberOfGuesses: Number(guesses),
+          wordListId: wordLists[0].id,
+        }),
+      }
+    );
+
+    if (!activityResponse.ok) {
+      throw new Error("Could not save activity");
+    }
+
+    setSaveMessage("Wordle activity saved successfully.");
+  } catch (error) {
+    console.error(error);
+    setSaveMessage("Failed to save Wordle activity.");
+  }
+}
 
   return (
     <section className="builder-page">
@@ -142,6 +191,15 @@ export default function WordlePage() {
             >
               Generate HTML
             </button>
+
+	   <button
+ 	     type="button"
+  	     className="generate-button"
+             onClick={saveWordleActivity}
+           >
+            Save Activity
+           </button>
+	   {saveMessage && <p>{saveMessage}</p>}
           </div>
 
           <div className="wordle-preview">

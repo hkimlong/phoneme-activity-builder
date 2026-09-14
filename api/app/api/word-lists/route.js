@@ -1,5 +1,17 @@
 import { prisma } from "../../../lib/prisma";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "http://localhost:3000",
+  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: corsHeaders,
+  });
+}
 export async function GET() {
   try {
     const wordLists = await prisma.wordList.findMany({
@@ -16,7 +28,7 @@ export async function GET() {
       },
     });
 
-    return Response.json(wordLists, { status: 200 });
+    return Response.json(wordLists, { status: 200, headers: corsHeaders, });
   } catch (error) {
     console.error("Failed to get word lists:", error);
 
@@ -52,7 +64,7 @@ export async function POST(request) {
       },
     });
 
-    return Response.json(wordList, { status: 201 });
+    return Response.json(wordList, { status: 201, headers: corsHeaders, });
   } catch (error) {
     console.error("Failed to create word list:", error);
 

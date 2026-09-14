@@ -1,5 +1,18 @@
 import { prisma } from "../../../lib/prisma";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "http://localhost:3000",
+  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: corsHeaders,
+  });
+}
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -31,7 +44,7 @@ export async function GET(request) {
       },
     });
 
-    return Response.json(activities, { status: 200 });
+    return Response.json(activities, { status: 200, headers: corsHeaders, });
   } catch (error) {
     console.error("Failed to get activities:", error);
 
@@ -91,7 +104,7 @@ export async function POST(request) {
       },
     });
 
-    return Response.json(activity, { status: 201 });
+    return Response.json(activity, { status: 201, headers: corsHeaders, });
   } catch (error) {
     console.error("Failed to create activity:", error);
 
