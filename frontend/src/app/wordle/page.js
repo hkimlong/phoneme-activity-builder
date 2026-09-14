@@ -20,6 +20,17 @@ async function saveWordleActivity() {
   try {
     setSaveMessage("");
 
+    if (!englishWord.trim()) {
+      setSaveMessage("Please enter an English word.");
+      return;
+    }
+
+    if (phonemes.length === 0) {
+      setSaveMessage("Please enter at least one phoneme.");
+      return;
+    }
+
+    // Get the available word lists.
     const wordListResponse = await fetch(
       "http://localhost:4080/api/word-lists"
     );
@@ -35,6 +46,29 @@ async function saveWordleActivity() {
       return;
     }
 
+    const wordListId = wordLists[0].id;
+
+    // Save the English word and its phonemes.
+    const wordResponse = await fetch(
+      "http://localhost:4080/api/words",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          englishWord: englishWord.trim(),
+          phonemes: phonemes,
+          wordListId: wordListId,
+        }),
+      }
+    );
+
+    if (!wordResponse.ok) {
+      throw new Error("Could not save word");
+    }
+
+    // Save the Wordle activity configuration.
     const activityResponse = await fetch(
       "http://localhost:4080/api/activities",
       {
@@ -43,12 +77,12 @@ async function saveWordleActivity() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: `${englishWord || "Wordle"} Activity`,
+          name: `${englishWord.trim()} Wordle`,
           type: "WORDLE",
           difficulty: difficulty.toUpperCase(),
           showHints: showHints === "yes",
           numberOfGuesses: Number(guesses),
-          wordListId: wordLists[0].id,
+          wordListId: wordListId,
         }),
       }
     );
@@ -59,7 +93,7 @@ async function saveWordleActivity() {
 
     setSaveMessage("Wordle activity saved successfully.");
   } catch (error) {
-    console.error(error);
+    console.error("Failed to save Wordle activity:", error);
     setSaveMessage("Failed to save Wordle activity.");
   }
 }
