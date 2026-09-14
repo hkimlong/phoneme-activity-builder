@@ -213,15 +213,53 @@ async function saveWordleActivity() {
             <button
               type="button"
               className="generate-button"
-              onClick={() =>
-                generateWordleHTML(
-                  phonemeWord,
-                  englishWord,
-                  difficulty,
-                  showHints,
-                  guesses
-                )
-              }
+              onClick={async () => {
+                try {
+                  const response = await fetch(
+                    "http://localhost:4080/api/activities?type=WORDLE"
+                  );
+
+                  if (!response.ok) {
+                    throw new Error("Could not load saved Wordle activity");
+                  }
+
+                  const activities = await response.json();
+
+                  if (activities.length === 0) {
+                    alert("No saved Wordle activity found.");
+                    return;
+                  }
+
+                  const savedActivity = activities[0];
+
+                  if (
+                    !savedActivity.wordList ||
+                    !savedActivity.wordList.words ||
+                    savedActivity.wordList.words.length === 0
+                  ) {
+                    alert("The saved activity does not contain any words.");
+                    return;
+                  }
+
+                  const savedWord = savedActivity.wordList.words[0];
+
+                  const savedPhonemeWord = savedWord.phonemes
+                    .sort((a, b) => a.position - b.position)
+                    .map((phoneme) => phoneme.symbol)
+                    .join(" ");
+
+                  generateWordleHTML(
+                    savedPhonemeWord,
+                    savedWord.englishWord,
+                    savedActivity.difficulty.toLowerCase(),
+                    savedActivity.showHints ? "yes" : "no",
+                    savedActivity.numberOfGuesses
+                  );
+                } catch (error) {
+                  console.error(error);
+                  alert("Failed to generate Wordle HTML from saved data.");
+                }
+              }}
             >
               Generate HTML
             </button>
