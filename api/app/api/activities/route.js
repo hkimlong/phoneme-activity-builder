@@ -1,15 +1,26 @@
 import { prisma } from "../../../lib/prisma";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "http://localhost:3000",
-  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
+function getCorsHeaders(request) {
+  const origin = request.headers.get("origin");
 
-export async function OPTIONS() {
+  const allowedOrigins = [
+    "http://localhost:3000",
+    "http://localhost",
+  ];
+
+  return {
+    "Access-Control-Allow-Origin": allowedOrigins.includes(origin)
+      ? origin
+      : "http://localhost",
+    "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  };
+}
+
+export async function OPTIONS(request) {
   return new Response(null, {
     status: 204,
-    headers: corsHeaders,
+    headers: getCorsHeaders(request),
   });
 }
 
@@ -55,7 +66,7 @@ export async function GET(request) {
 
     return Response.json(activities, {
       status: 200,
-      headers: corsHeaders,
+      headers: getCorsHeaders(request),
     });
   } catch (error) {
     console.error("Failed to get activities:", error);
@@ -66,7 +77,7 @@ export async function GET(request) {
       },
       {
         status: 500,
-        headers: corsHeaders,
+        headers: getCorsHeaders(request),
       }
     );
   }
@@ -83,7 +94,7 @@ export async function POST(request) {
         },
         {
           status: 400,
-          headers: corsHeaders,
+          headers: getCorsHeaders(request),
         }
       );
     }
@@ -95,7 +106,7 @@ export async function POST(request) {
         },
         {
           status: 400,
-          headers: corsHeaders,
+          headers: getCorsHeaders(request),
         }
       );
     }
@@ -107,7 +118,7 @@ export async function POST(request) {
         },
         {
           status: 400,
-          headers: corsHeaders,
+          headers: getCorsHeaders(request),
         }
       );
     }
@@ -119,7 +130,7 @@ export async function POST(request) {
         },
         {
           status: 400,
-          headers: corsHeaders,
+          headers: getCorsHeaders(request),
         }
       );
     }
@@ -141,7 +152,7 @@ export async function POST(request) {
           },
           {
             status: 400,
-            headers: corsHeaders,
+            headers: getCorsHeaders(request),
           }
         );
       }
@@ -162,7 +173,7 @@ export async function POST(request) {
           },
           {
             status: 400,
-            headers: corsHeaders,
+            headers: getCorsHeaders(request),
           }
         );
       }
@@ -217,7 +228,7 @@ export async function POST(request) {
 
     return Response.json(activity, {
       status: 201,
-      headers: corsHeaders,
+      headers: getCorsHeaders(request),
     });
   } catch (error) {
     console.error("Failed to create activity:", error);
@@ -228,7 +239,7 @@ export async function POST(request) {
       },
       {
         status: 500,
-        headers: corsHeaders,
+        headers: getCorsHeaders(request),
       }
     );
   }
@@ -247,7 +258,7 @@ export async function PATCH(request) {
         },
         {
           status: 400,
-          headers: corsHeaders,
+          headers: getCorsHeaders(request),
         }
       );
     }
@@ -259,7 +270,7 @@ export async function PATCH(request) {
         },
         {
           status: 400,
-          headers: corsHeaders,
+          headers: getCorsHeaders(request),
         }
       );
     }
@@ -271,7 +282,7 @@ export async function PATCH(request) {
         },
         {
           status: 400,
-          headers: corsHeaders,
+          headers: getCorsHeaders(request),
         }
       );
     }
@@ -283,7 +294,7 @@ export async function PATCH(request) {
         },
         {
           status: 400,
-          headers: corsHeaders,
+          headers: getCorsHeaders(request),
         }
       );
     }
@@ -305,7 +316,7 @@ export async function PATCH(request) {
           },
           {
             status: 400,
-            headers: corsHeaders,
+            headers: getCorsHeaders(request),
           }
         );
       }
@@ -326,7 +337,7 @@ export async function PATCH(request) {
           },
           {
             status: 400,
-            headers: corsHeaders,
+            headers: getCorsHeaders(request),
           }
         );
       }
@@ -383,7 +394,7 @@ export async function PATCH(request) {
 
     return Response.json(activity, {
       status: 200,
-      headers: corsHeaders,
+      headers: getCorsHeaders(request),
     });
   } catch (error) {
     console.error("Failed to update activity:", error);
@@ -394,7 +405,7 @@ export async function PATCH(request) {
       },
       {
         status: 500,
-        headers: corsHeaders,
+        headers: getCorsHeaders(request),
       }
     );
   }
@@ -412,7 +423,7 @@ export async function DELETE(request) {
         },
         {
           status: 400,
-          headers: corsHeaders,
+          headers: getCorsHeaders(request),
         }
       );
     }
@@ -429,7 +440,7 @@ export async function DELETE(request) {
       },
       {
         status: 200,
-        headers: corsHeaders,
+        headers: getCorsHeaders(request),
       }
     );
   } catch (error) {
@@ -441,7 +452,7 @@ export async function DELETE(request) {
       },
       {
         status: 500,
-        headers: corsHeaders,
+        headers: getCorsHeaders(request),
       }
     );
   }

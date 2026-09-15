@@ -12,5 +12,31 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: phoneme-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://user:password@postgres:5432/phoneme_builder
+    ports:
+      - "4080:3000"
+    depends_on:
+      - postgres
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:4080
+    container_name: phoneme-frontend
+    restart: unless-stopped
+    ports:
+      - "80:3000"
+    depends_on:
+      - api
+
 volumes:
   postgres_data:

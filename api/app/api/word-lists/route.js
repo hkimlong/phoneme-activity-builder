@@ -1,18 +1,30 @@
 import { prisma } from "../../../lib/prisma";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "http://localhost:3000",
-  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
+function getCorsHeaders(request) {
+  const origin = request.headers.get("origin");
 
-export async function OPTIONS() {
+  const allowedOrigins = [
+    "http://localhost:3000",
+    "http://localhost",
+  ];
+
+  return {
+    "Access-Control-Allow-Origin": allowedOrigins.includes(origin)
+      ? origin
+      : "http://localhost",
+    "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  };
+}
+
+export async function OPTIONS(request) {
   return new Response(null, {
     status: 204,
-    headers: corsHeaders,
+    headers: getCorsHeaders(request),
   });
 }
-export async function GET() {
+
+export async function GET(request) {
   try {
     const wordLists = await prisma.wordList.findMany({
       include: {
@@ -28,7 +40,10 @@ export async function GET() {
       },
     });
 
-    return Response.json(wordLists, { status: 200, headers: corsHeaders, });
+    return Response.json(wordLists, {
+      status: 200,
+      headers: getCorsHeaders(request),
+    });
   } catch (error) {
     console.error("Failed to get word lists:", error);
 
@@ -38,6 +53,7 @@ export async function GET() {
       },
       {
         status: 500,
+        headers: getCorsHeaders(request),
       }
     );
   }
@@ -54,6 +70,7 @@ export async function POST(request) {
         },
         {
           status: 400,
+          headers: getCorsHeaders(request),
         }
       );
     }
@@ -64,7 +81,10 @@ export async function POST(request) {
       },
     });
 
-    return Response.json(wordList, { status: 201, headers: corsHeaders, });
+    return Response.json(wordList, {
+      status: 201,
+      headers: getCorsHeaders(request),
+    });
   } catch (error) {
     console.error("Failed to create word list:", error);
 
@@ -74,6 +94,7 @@ export async function POST(request) {
       },
       {
         status: 500,
+        headers: getCorsHeaders(request),
       }
     );
   }
@@ -87,32 +108,52 @@ export async function PATCH(request) {
 
     if (!id) {
       return Response.json(
-        { error: "Word list ID is required" },
-        { status: 400 }
+        {
+          error: "Word list ID is required",
+        },
+        {
+          status: 400,
+          headers: getCorsHeaders(request),
+        }
       );
     }
 
     if (!body.name || body.name.trim() === "") {
       return Response.json(
-        { error: "Word list name is required" },
-        { status: 400 }
+        {
+          error: "Word list name is required",
+        },
+        {
+          status: 400,
+          headers: getCorsHeaders(request),
+        }
       );
     }
 
     const wordList = await prisma.wordList.update({
-      where: { id },
+      where: {
+        id: id,
+      },
       data: {
         name: body.name.trim(),
       },
     });
 
-    return Response.json(wordList, { status: 200 });
+    return Response.json(wordList, {
+      status: 200,
+      headers: getCorsHeaders(request),
+    });
   } catch (error) {
     console.error("Failed to update word list:", error);
 
     return Response.json(
-      { error: "Failed to update word list" },
-      { status: 500 }
+      {
+        error: "Failed to update word list",
+      },
+      {
+        status: 500,
+        headers: getCorsHeaders(request),
+      }
     );
   }
 }
@@ -124,25 +165,42 @@ export async function DELETE(request) {
 
     if (!id) {
       return Response.json(
-        { error: "Word list ID is required" },
-        { status: 400 }
+        {
+          error: "Word list ID is required",
+        },
+        {
+          status: 400,
+          headers: getCorsHeaders(request),
+        }
       );
     }
 
     await prisma.wordList.delete({
-      where: { id },
+      where: {
+        id: id,
+      },
     });
 
     return Response.json(
-      { message: "Word list deleted successfully" },
-      { status: 200 }
+      {
+        message: "Word list deleted successfully",
+      },
+      {
+        status: 200,
+        headers: getCorsHeaders(request),
+      }
     );
   } catch (error) {
     console.error("Failed to delete word list:", error);
 
     return Response.json(
-      { error: "Failed to delete word list" },
-      { status: 500 }
+      {
+        error: "Failed to delete word list",
+      },
+      {
+        status: 500,
+        headers: getCorsHeaders(request),
+      }
     );
   }
 }
