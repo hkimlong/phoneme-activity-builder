@@ -34,13 +34,12 @@ useEffect(() => {
       const activities = await getActivities("WORDLE");
 
       setSavedActivities(activities);
-      console.log("Loaded Wordle activities:", activities);
-
-      if (activities.length > 0) {
-        setSelectedActivityId(activities[0].id);
-      }
+      setSelectedActivityId("");
     } catch (error) {
-      console.error("Failed to load saved Wordle activities:", error);
+      console.error(
+        "Failed to load saved Wordle activities:",
+        error
+      );
     }
   }
 
@@ -445,17 +444,19 @@ function loadActivityIntoPreview(activityId) {
             <select
               id="savedActivity"
               value={selectedActivityId}
-              onChange={(e) => loadActivityIntoPreview(e.target.value)}
+              onChange={(e) =>
+                loadActivityIntoPreview(e.target.value)
+              }
             >
-              {savedActivities.length === 0 ? (
-                <option value="">No saved activities</option>
-              ) : (
-                savedActivities.map((activity) => (
-                  <option key={activity.id} value={activity.id}>
-                    {activity.name}
-                  </option>
-                ))
-              )}
+              <option value="">
+                Select a saved activity
+              </option>
+
+              {savedActivities.map((activity) => (
+                <option key={activity.id} value={activity.id}>
+                  {activity.name}
+                </option>
+              ))}
             </select>
           </div>
 
