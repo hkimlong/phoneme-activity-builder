@@ -5,6 +5,9 @@ import {
   getActivities,
   createWord,
   createActivity,
+  deleteActivity,
+  updateActivity,
+  updateWord,
 } from "@/functions/api";
 import { useEffect, useState } from "react";
 import { generateWordleHTML } from "@/functions/generateHTML";
@@ -97,6 +100,201 @@ async function saveWordleActivity() {
   } catch (error) {
     console.error("Failed to save Wordle activity:", error);
     setSaveMessage("Failed to save Wordle activity.");
+  }
+}
+
+async function deleteSavedActivity() {
+  try {
+    if (!selectedActivityId) {
+      setSaveMessage(
+        "Please select a saved activity to delete."
+      );
+      return;
+    }
+
+    const selectedActivity = savedActivities.find(
+      (activity) => activity.id === selectedActivityId
+    );
+
+    if (!selectedActivity) {
+      setSaveMessage(
+        "Could not find the selected activity."
+      );
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete "${selectedActivity.name}"?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    await deleteActivity(selectedActivityId);
+
+    const remainingActivities = savedActivities.filter(
+      (activity) => activity.id !== selectedActivityId
+    );
+
+    setSavedActivities(remainingActivities);
+
+    if (remainingActivities.length > 0) {
+      const nextActivity = remainingActivities[0];
+
+      setSelectedActivityId(nextActivity.id);
+
+      if (nextActivity.word) {
+        setEnglishWord(nextActivity.word.englishWord);
+
+        setPhonemeWord(
+          [...nextActivity.word.phonemes]
+            .sort((a, b) => a.position - b.position)
+            .map((phoneme) => phoneme.symbol)
+            .join(" ")
+        );
+      }
+
+      setDifficulty(
+        nextActivity.difficulty.toLowerCase()
+      );
+
+      setShowHints(
+        nextActivity.showHints ? "yes" : "no"
+      );
+
+      setGuesses(
+        nextActivity.numberOfGuesses ?? 6
+      );
+    } else {
+      setSelectedActivityId("");
+    }
+
+    setSaveMessage(
+      "Wordle activity deleted successfully."
+    );
+  } catch (error) {
+    console.error(
+      "Failed to delete Wordle activity:",
+      error
+    );
+
+    setSaveMessage(
+      "Failed to delete Wordle activity."
+    );
+  }
+}
+
+async function updateSavedActivity() {
+  try {
+    setSaveMessage("");
+
+    if (!selectedActivityId) {
+      setSaveMessage(
+        "Please select a saved activity to update."
+      );
+      return;
+    }
+
+    const selectedActivity = savedActivities.find(
+      (activity) => activity.id === selectedActivityId
+    );
+
+    if (!selectedActivity) {
+      setSaveMessage(
+        "Could not find the selected activity."
+      );
+      return;
+    }
+
+    if (!selectedActivity.word) {
+      setSaveMessage(
+        "The selected activity does not contain a saved word."
+      );
+      return;
+    }
+
+    if (!englishWord.trim()) {
+      setSaveMessage(
+        "Please enter the English equivalent."
+      );
+      return;
+    }
+
+    const phonemes = phonemeWord
+      .trim()
+      .split(/\s+/)
+      .filter((item) => item.length > 0);
+
+    if (phonemes.length === 0) {
+      setSaveMessage(
+        "Please enter a phoneme word."
+      );
+      return;
+    }
+
+    await updateWord({
+      id: selectedActivity.word.id,
+      englishWord: englishWord.trim(),
+      phonemes: phonemes,
+      wordListId: selectedActivity.word.wordListId,
+    });
+
+    await updateActivity({
+      id: selectedActivityId,
+      name: `${englishWord.trim()} Wordle`,
+      type: "WORDLE",
+      difficulty: difficulty.toUpperCase(),
+      showHints: showHints === "yes",
+      numberOfGuesses: Number(guesses),
+      wordId: selectedActivity.word.id,
+    });
+
+    const refreshedActivities = await getActivities("WORDLE");
+
+    setSavedActivities(refreshedActivities);
+
+    const refreshedActivity = refreshedActivities.find(
+      (activity) => activity.id === selectedActivityId
+    );
+
+    if (refreshedActivity && refreshedActivity.word) {
+      setEnglishWord(
+        refreshedActivity.word.englishWord
+      );
+
+      setPhonemeWord(
+        [...refreshedActivity.word.phonemes]
+          .sort((a, b) => a.position - b.position)
+          .map((phoneme) => phoneme.symbol)
+          .join(" ")
+      );
+
+      setDifficulty(
+        refreshedActivity.difficulty.toLowerCase()
+      );
+
+      setShowHints(
+        refreshedActivity.showHints ? "yes" : "no"
+      );
+
+      setGuesses(
+        refreshedActivity.numberOfGuesses ?? 6
+      );
+    }
+
+    setSaveMessage(
+      "Wordle activity updated successfully."
+    );
+  } catch (error) {
+    console.error(
+      "Failed to update Wordle activity:",
+      error
+    );
+
+    setSaveMessage(
+      "Failed to update Wordle activity."
+    );
   }
 }
 
@@ -259,6 +457,16 @@ function loadActivityIntoPreview(activityId) {
             </select>
           </div>
 
+          <div className="form-row">
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={deleteSavedActivity}
+            >
+              DELETE SAVED ACTIVITY
+            </button>
+          </div>
+
         </div>
 
         <div className="preview-panel">
@@ -316,13 +524,23 @@ function loadActivityIntoPreview(activityId) {
               Generate HTML
             </button>
 
-	   <button
- 	     type="button"
-  	     className="generate-button"
-             onClick={saveWordleActivity}
-           >
-            Save Activity
+          <button
+            type="button"
+              className="generate-button"
+                  onClick={saveWordleActivity}
+                >
+                  Save Activity
            </button>
+
+           <button
+            type="button"
+            className="secondary-button preview-action-button"
+            onClick={updateSavedActivity}
+          >
+            UPDATE ACTIVITY
+          </button>
+
+
 	   {saveMessage && <p>{saveMessage}</p>}
           </div>
 
