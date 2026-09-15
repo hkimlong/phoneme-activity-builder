@@ -41,6 +41,7 @@ model Activity {
   showHints       Boolean      @default(true)
   numberOfGuesses Int?
   gridSize        Int?
+  puzzleData      Json?
   wordListId      String
   wordList        WordList     @relation(fields: [wordListId], references: [id], onDelete: Cascade)
   createdAt       DateTime     @default(now())

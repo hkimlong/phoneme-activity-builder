@@ -138,6 +138,10 @@ export async function POST(request) {
           body.type === "WORD_SEARCH"
             ? Number(body.gridSize ?? 10)
             : null,
+        puzzleData:
+          body.type === "WORD_SEARCH"
+            ? body.puzzleData ?? null
+            : null,
         wordListId: body.wordListId,
         wordId: body.wordId || null,
       },
@@ -151,7 +155,19 @@ export async function POST(request) {
             },
           },
         },
-        wordList: true,
+        wordList: {
+          include: {
+            words: {
+              include: {
+                phonemes: {
+                  orderBy: {
+                    position: "asc",
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -245,6 +261,10 @@ export async function PATCH(request) {
           body.type === "WORD_SEARCH"
             ? Number(body.gridSize ?? 10)
             : null,
+        puzzleData:
+          body.type === "WORD_SEARCH"
+            ? body.puzzleData ?? null
+            : null,
         wordId: body.wordId || null,
       },
       include: {
@@ -257,7 +277,19 @@ export async function PATCH(request) {
             },
           },
         },
-        wordList: true,
+        wordList: {
+          include: {
+            words: {
+              include: {
+                phonemes: {
+                  orderBy: {
+                    position: "asc",
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 

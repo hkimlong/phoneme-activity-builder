@@ -3,6 +3,12 @@
 import { useEffect, useState } from "react";
 import { generateWordSearchHTML } from "@/functions/generateHTML";
 import { generateWordSearchGrid } from "@/functions/generateWordSearchGrid";
+import {
+  getActivities,
+  createWordList,
+  createWord,
+  createActivity,
+} from "@/functions/api";
 
 export default function WordSearchPage() {
   const [difficulty, setDifficulty] = useState("easy");
@@ -24,15 +30,7 @@ export default function WordSearchPage() {
   useEffect(() => {
     async function loadSavedActivities() {
       try {
-        const response = await fetch(
-          "http://localhost:4080/api/activities?type=WORD_SEARCH"
-        );
-
-        if (!response.ok) {
-          throw new Error("Could not load saved Word Search activities");
-        }
-
-        const activities = await response.json();
+        const activities = await getActivities("WORD_SEARCH");
 
         setSavedActivities(activities);
 
@@ -49,6 +47,115 @@ export default function WordSearchPage() {
 
     loadSavedActivities();
   }, []);
+
+  async function saveWordSearchActivity() {
+   try {
+    setSaveMessage("");
+
+    if (!puzzle) {
+      setSaveMessage(
+        "Please regenerate the grid before saving the activity."
+      );
+      return;
+    }
+
+    const cleanedWords = words.map((word) => ({
+      english: word.english.trim(),
+      phonemes: word.phonemes
+        .trim()
+        .split(/\s+/)
+        .filter((item) => item.length > 0),
+    }));
+
+    const hasInvalidWord = cleanedWords.some(
+      (word) =>
+        word.english.length === 0 ||
+        word.phonemes.length === 0
+    );
+
+    if (hasInvalidWord) {
+      setSaveMessage(
+        "Please enter a phoneme word and English equivalent for all five words."
+      );
+      return;
+    }
+
+    const savedWordList = await createWordList(
+      `Word Search ${new Date().toLocaleString()}`
+    );
+
+    for (const word of cleanedWords) {
+      await createWord({
+        englishWord: word.english,
+        phonemes: word.phonemes,
+        wordListId: savedWordList.id,
+      });
+    }
+
+    const savedActivity = await createActivity({
+      name: `Word Search ${new Date().toLocaleString()}`,
+      type: "WORD_SEARCH",
+      difficulty: difficulty.toUpperCase(),
+      showHints: true,
+      gridSize: Number(gridSize),
+      puzzleData: puzzle,
+      wordListId: savedWordList.id,
+    });
+
+    setSavedActivities((currentActivities) => [
+      savedActivity,
+      ...currentActivities,
+    ]);
+
+    setSelectedActivityId(savedActivity.id);
+
+    setSaveMessage(
+      "Word Search activity saved successfully."
+    );
+  } catch (error) {
+    console.error(
+      "Failed to save Word Search activity:",
+      error
+    );
+
+    setSaveMessage(
+      "Failed to save Word Search activity."
+    );
+  }
+  }
+
+  function loadSavedActivity(activityId) {
+    setSelectedActivityId(activityId);
+
+    const activity = savedActivities.find(
+      (item) => item.id === activityId
+    );
+
+    if (!activity) {
+      return;
+    }
+
+    if (!activity.wordList || !activity.wordList.words) {
+      setSaveMessage(
+        "The saved activity does not contain a word list."
+      );
+      return;
+    }
+
+    const loadedWords = activity.wordList.words.map((word) => ({
+      english: word.englishWord,
+      phonemes: [...word.phonemes]
+        .sort((a, b) => a.position - b.position)
+        .map((phoneme) => phoneme.symbol)
+        .join(" "),
+    }));
+
+    setWords(loadedWords);
+    setDifficulty(activity.difficulty.toLowerCase());
+    setGridSize(activity.gridSize ?? 10);
+    setPuzzle(activity.puzzleData ?? null);
+    setSaveMessage("");
+  }
 
   function updateWord(index, field, value) {
     const updatedWords = [...words];
@@ -121,6 +228,26 @@ export default function WordSearchPage() {
             </div>
           </div>
 
+          <div className="form-row">
+            <label htmlFor="savedActivity">Saved Activity:</label>
+
+            <select
+              id="savedActivity"
+              value={selectedActivityId}
+              onChange={(e) => loadSavedActivity(e.target.value)}
+            >
+              {savedActivities.length === 0 ? (
+                <option value="">No saved activities</option>
+              ) : (
+                savedActivities.map((activity) => (
+                  <option key={activity.id} value={activity.id}>
+                    {activity.name}
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
+
           <fieldset className="radio-group">
             <legend>Difficulty</legend>
 
@@ -188,24 +315,71 @@ export default function WordSearchPage() {
 
               <button
                 type="button"
-                className="generate-button preview-action-button"
-                onClick={() => {
-                  if (!puzzle) {
-                    alert("Please regenerate the grid before generating the HTML.");
-                    return;
-                  }
+                className="secondary-button preview-action-button"
+                onClick={saveWordSearchActivity}
+              >
+                SAVE ACTIVITY
+              </button>
 
-                  generateWordSearchHTML(
-                    puzzle,
-                    difficulty,
-                    gridSize
-                  );
+              <button
+                type="button"
+                className="generate-button preview-action-button"
+                onClick={async () => {
+                  try {
+                    if (!selectedActivityId) {
+                      alert(
+                        "Please save or select a Word Search activity before generating the HTML."
+                      );
+                      return;
+                    }
+
+                    const activities = await getActivities("WORD_SEARCH");
+
+                    const savedActivity = activities.find(
+                      (activity) => activity.id === selectedActivityId
+                    );
+
+                    if (!savedActivity) {
+                      alert(
+                        "Could not find the selected Word Search activity."
+                      );
+                      return;
+                    }
+
+                    if (!savedActivity.puzzleData) {
+                      alert(
+                        "This activity does not have a saved grid. Please regenerate the grid and save a new activity."
+                      );
+                      return;
+                    }
+
+                    generateWordSearchHTML(
+                      savedActivity.puzzleData,
+                      savedActivity.difficulty.toLowerCase(),
+                      savedActivity.gridSize
+                    );
+                  } catch (error) {
+                    console.error(
+                      "Failed to generate Word Search HTML:",
+                      error
+                    );
+
+                    alert(
+                      "Failed to generate the Word Search HTML."
+                    );
+                  }
                 }}
               >
                 Generate HTML
               </button>
 
             </div>
+
+            {saveMessage && (
+              <p className="helper-text">
+                {saveMessage}
+              </p>
+            )}
           </div>
 
           <div className="word-search-preview">

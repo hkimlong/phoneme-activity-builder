@@ -29,6 +29,23 @@ export async function getWordLists() {
   );
 }
 
+export async function createWordList(name) {
+  const response = await fetch(`${API_URL}/api/word-lists`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name,
+    }),
+  });
+
+  return handleResponse(
+    response,
+    "Could not create word list"
+  );
+}
+
 // WORDS
 
 export async function createWord({
@@ -74,6 +91,7 @@ export async function createActivity({
   showHints = true,
   numberOfGuesses = null,
   gridSize = null,
+  puzzleData = null,
   wordListId,
   wordId = null,
 }) {
@@ -91,6 +109,7 @@ export async function createActivity({
         showHints,
         numberOfGuesses,
         gridSize,
+        puzzleData,
         wordListId,
         wordId,
       }),
