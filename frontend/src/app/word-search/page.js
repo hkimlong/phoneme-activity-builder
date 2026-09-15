@@ -9,6 +9,8 @@ import {
   createWord,
   createActivity,
   deleteActivity,
+  updateActivity,
+  updateWord as updateSavedWord,
 } from "@/functions/api";
 
 export default function WordSearchPage() {
@@ -116,6 +118,138 @@ export default function WordSearchPage() {
 
       setSaveMessage(
         "Failed to delete Word Search activity."
+      );
+    }
+  }
+
+  async function updateSavedActivity() {
+    try {
+      setSaveMessage("");
+
+      if (!selectedActivityId) {
+        setSaveMessage(
+          "Please select a saved activity to update."
+        );
+        return;
+      }
+
+      if (!puzzle) {
+        setSaveMessage(
+          "Please regenerate the grid before updating the activity."
+        );
+        return;
+      }
+
+      const selectedActivity = savedActivities.find(
+        (activity) => activity.id === selectedActivityId
+      );
+
+      if (!selectedActivity) {
+        setSaveMessage(
+          "Could not find the selected activity."
+        );
+        return;
+      }
+
+      if (
+        !selectedActivity.wordList ||
+        !selectedActivity.wordList.words
+      ) {
+        setSaveMessage(
+          "The selected activity does not contain a word list."
+        );
+        return;
+      }
+
+      const cleanedWords = words.map((word) => ({
+        english: word.english.trim(),
+        phonemes: word.phonemes
+          .trim()
+          .split(/\s+/)
+          .filter((item) => item.length > 0),
+      }));
+
+      const hasInvalidWord = cleanedWords.some(
+        (word) =>
+          word.english.length === 0 ||
+          word.phonemes.length === 0
+      );
+
+      if (hasInvalidWord) {
+        setSaveMessage(
+          "Please enter a phoneme word and English equivalent for all five words."
+        );
+        return;
+      }
+
+      const savedWords = selectedActivity.wordList.words;
+
+      if (savedWords.length !== cleanedWords.length) {
+        setSaveMessage(
+          "The saved activity does not contain the expected number of words."
+        );
+        return;
+      }
+
+      for (let index = 0; index < cleanedWords.length; index++) {
+        await updateSavedWord({
+          id: savedWords[index].id,
+          englishWord: cleanedWords[index].english,
+          phonemes: cleanedWords[index].phonemes,
+          wordListId: selectedActivity.wordListId,
+        });
+      }
+
+      await updateActivity({
+        id: selectedActivityId,
+        name: selectedActivity.name,
+        type: "WORD_SEARCH",
+        difficulty: difficulty.toUpperCase(),
+        showHints: true,
+        gridSize: Number(gridSize),
+        puzzleData: puzzle,
+      });
+
+      const refreshedActivities = await getActivities(
+        "WORD_SEARCH"
+      );
+
+      setSavedActivities(refreshedActivities);
+
+      const refreshedActivity = refreshedActivities.find(
+        (activity) => activity.id === selectedActivityId
+      );
+
+      if (refreshedActivity) {
+        const loadedWords = refreshedActivity.wordList.words.map(
+          (word) => ({
+            english: word.englishWord,
+            phonemes: [...word.phonemes]
+              .sort((a, b) => a.position - b.position)
+              .map((phoneme) => phoneme.symbol)
+              .join(" "),
+          })
+        );
+
+        setWords(loadedWords);
+        setDifficulty(
+          refreshedActivity.difficulty.toLowerCase()
+        );
+        setGridSize(refreshedActivity.gridSize ?? 10);
+        setPuzzle(refreshedActivity.puzzleData ?? null);
+      }
+
+      setSaveMessage(
+        "Word Search activity updated successfully."
+      );
+    } catch (error) {
+      console.error(
+        "Failed to update Word Search activity:",
+        error
+      );
+
+      setSaveMessage(
+        "Failed to update Word Search activity."
       );
     }
   }
@@ -402,6 +536,14 @@ export default function WordSearchPage() {
                 onClick={saveWordSearchActivity}
               >
                 SAVE ACTIVITY
+              </button>
+
+              <button
+                type="button"
+                className="secondary-button preview-action-button"
+                onClick={updateSavedActivity}
+              >
+                UPDATE ACTIVITY
               </button>
 
               <button

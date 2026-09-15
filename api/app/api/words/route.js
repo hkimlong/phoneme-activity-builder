@@ -206,13 +206,13 @@ export async function PATCH(request) {
       });
     });
 
-    return Response.json(word, { status: 200 });
+    return Response.json(word, { status: 200, headers: corsHeaders, });
   } catch (error) {
     console.error("Failed to update word:", error);
 
     return Response.json(
       { error: "Failed to update word" },
-      { status: 500 }
+      { status: 500, headers: corsHeaders, }
     );
   }
 }

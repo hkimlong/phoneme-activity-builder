@@ -135,3 +135,67 @@ export async function deleteActivity(id) {
     "Could not delete activity"
   );
 }
+
+export async function updateActivity({
+  id,
+  name,
+  type,
+  difficulty,
+  showHints = true,
+  numberOfGuesses = null,
+  gridSize = null,
+  puzzleData = null,
+  wordId = null,
+}) {
+  const response = await fetch(
+    `${API_URL}/api/activities?id=${encodeURIComponent(id)}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name,
+        type,
+        difficulty,
+        showHints,
+        numberOfGuesses,
+        gridSize,
+        puzzleData,
+        wordId,
+      }),
+    }
+  );
+
+  return handleResponse(
+    response,
+    "Could not update activity"
+  );
+}
+
+export async function updateWord({
+  id,
+  englishWord,
+  phonemes,
+  wordListId,
+}) {
+  const response = await fetch(
+    `${API_URL}/api/words?id=${encodeURIComponent(id)}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        englishWord,
+        phonemes,
+        wordListId,
+      }),
+    }
+  );
+
+  return handleResponse(
+    response,
+    "Could not update word"
+  );
+}
