@@ -248,9 +248,7 @@ export default function WordSearchPage() {
         error
       );
 
-      setSaveMessage(
-        "Failed to update Word Search activity."
-      );
+      setSaveMessage(error.message);
     }
   }
 
@@ -324,9 +322,7 @@ export default function WordSearchPage() {
       error
     );
 
-    setSaveMessage(
-      "Failed to save Word Search activity."
-    );
+    setSaveMessage(error.message);
   }
   }
 

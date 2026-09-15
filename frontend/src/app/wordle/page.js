@@ -98,8 +98,12 @@ async function saveWordleActivity() {
 
     setSaveMessage("Wordle activity saved successfully.");
   } catch (error) {
-    console.error("Failed to save Wordle activity:", error);
-    setSaveMessage("Failed to save Wordle activity.");
+    console.error(
+      "Failed to save Wordle activity:",
+      error
+    );
+
+    setSaveMessage(error.message);
   }
 }
 
@@ -292,9 +296,7 @@ async function updateSavedActivity() {
       error
     );
 
-    setSaveMessage(
-      "Failed to update Wordle activity."
-    );
+    setSaveMessage(error.message);
   }
 }
 

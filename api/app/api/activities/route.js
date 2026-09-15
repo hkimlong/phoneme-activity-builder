@@ -124,6 +124,50 @@ export async function POST(request) {
       );
     }
 
+    if (body.type === "WORDLE") {
+      const numberOfGuesses = Number(
+        body.numberOfGuesses ?? 6
+      );
+
+      if (
+        !Number.isInteger(numberOfGuesses) ||
+        numberOfGuesses < 1 ||
+        numberOfGuesses > 20
+      ) {
+        return Response.json(
+          {
+            error:
+              "Number of guesses must be a whole number between 1 and 20",
+          },
+          {
+            status: 400,
+            headers: corsHeaders,
+          }
+        );
+      }
+    }
+
+    if (body.type === "WORD_SEARCH") {
+      const gridSize = Number(body.gridSize ?? 10);
+
+      if (
+        !Number.isInteger(gridSize) ||
+        gridSize < 5 ||
+        gridSize > 20
+      ) {
+        return Response.json(
+          {
+            error:
+              "Grid size must be a whole number between 5 and 20",
+          },
+          {
+            status: 400,
+            headers: corsHeaders,
+          }
+        );
+      }
+    }
+
     const activity = await prisma.activity.create({
       data: {
         name: body.name.trim(),
@@ -242,6 +286,50 @@ export async function PATCH(request) {
           headers: corsHeaders,
         }
       );
+    }
+
+    if (body.type === "WORDLE") {
+      const numberOfGuesses = Number(
+        body.numberOfGuesses ?? 6
+      );
+
+      if (
+        !Number.isInteger(numberOfGuesses) ||
+        numberOfGuesses < 1 ||
+        numberOfGuesses > 20
+      ) {
+        return Response.json(
+          {
+            error:
+              "Number of guesses must be a whole number between 1 and 20",
+          },
+          {
+            status: 400,
+            headers: corsHeaders,
+          }
+        );
+      }
+    }
+
+    if (body.type === "WORD_SEARCH") {
+      const gridSize = Number(body.gridSize ?? 10);
+
+      if (
+        !Number.isInteger(gridSize) ||
+        gridSize < 5 ||
+        gridSize > 20
+      ) {
+        return Response.json(
+          {
+            error:
+              "Grid size must be a whole number between 5 and 20",
+          },
+          {
+            status: 400,
+            headers: corsHeaders,
+          }
+        );
+      }
     }
 
     const activity = await prisma.activity.update({
