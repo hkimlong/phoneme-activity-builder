@@ -8,6 +8,7 @@ import {
   createWordList,
   createWord,
   createActivity,
+  deleteActivity,
 } from "@/functions/api";
 
 export default function WordSearchPage() {
@@ -33,10 +34,8 @@ export default function WordSearchPage() {
         const activities = await getActivities("WORD_SEARCH");
 
         setSavedActivities(activities);
-
-        if (activities.length > 0) {
-          setSelectedActivityId(activities[0].id);
-        }
+        setSelectedActivityId("");
+        
       } catch (error) {
         console.error(
           "Failed to load saved Word Search activities:",
@@ -47,6 +46,79 @@ export default function WordSearchPage() {
 
     loadSavedActivities();
   }, []);
+
+  async function deleteSavedActivity() {
+    try {
+      if (!selectedActivityId) {
+        setSaveMessage(
+          "Please select a saved activity to delete."
+        );
+        return;
+      }
+
+      const selectedActivity = savedActivities.find(
+        (activity) => activity.id === selectedActivityId
+      );
+
+      if (!selectedActivity) {
+        setSaveMessage(
+          "Could not find the selected activity."
+        );
+        return;
+      }
+
+      const confirmed = window.confirm(
+        `Delete "${selectedActivity.name}"?`
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      await deleteActivity(selectedActivityId);
+
+      const remainingActivities = savedActivities.filter(
+        (activity) => activity.id !== selectedActivityId
+      );
+
+      setSavedActivities(remainingActivities);
+
+      if (remainingActivities.length > 0) {
+        const nextActivity = remainingActivities[0];
+
+        setSelectedActivityId(nextActivity.id);
+
+        const loadedWords = nextActivity.wordList.words.map((word) => ({
+          english: word.englishWord,
+          phonemes: [...word.phonemes]
+            .sort((a, b) => a.position - b.position)
+            .map((phoneme) => phoneme.symbol)
+            .join(" "),
+        }));
+
+        setWords(loadedWords);
+        setDifficulty(nextActivity.difficulty.toLowerCase());
+        setGridSize(nextActivity.gridSize ?? 10);
+        setPuzzle(nextActivity.puzzleData ?? null);
+      } else {
+        setSelectedActivityId("");
+        setPuzzle(null);
+      }
+
+      setSaveMessage(
+        "Word Search activity deleted successfully."
+      );
+    } catch (error) {
+      console.error(
+        "Failed to delete Word Search activity:",
+        error
+      );
+
+      setSaveMessage(
+        "Failed to delete Word Search activity."
+      );
+    }
+  }
 
   async function saveWordSearchActivity() {
    try {
@@ -236,16 +308,27 @@ export default function WordSearchPage() {
               value={selectedActivityId}
               onChange={(e) => loadSavedActivity(e.target.value)}
             >
-              {savedActivities.length === 0 ? (
-                <option value="">No saved activities</option>
-              ) : (
-                savedActivities.map((activity) => (
-                  <option key={activity.id} value={activity.id}>
-                    {activity.name}
-                  </option>
-                ))
-              )}
+              <option value="">
+                Select a saved activity
+              </option>
+
+              {savedActivities.map((activity) => (
+                <option key={activity.id} value={activity.id}>
+                  {activity.name}
+                </option>
+              ))}
             </select>
+          </div>
+
+          <div className="form-row">
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={deleteSavedActivity}
+              
+            >
+              DELETE SAVED ACTIVITY
+            </button>
           </div>
 
           <fieldset className="radio-group">

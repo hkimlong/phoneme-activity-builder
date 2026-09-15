@@ -121,3 +121,17 @@ export async function createActivity({
     "Could not save activity"
   );
 }
+
+export async function deleteActivity(id) {
+  const response = await fetch(
+    `${API_URL}/api/activities?id=${encodeURIComponent(id)}`,
+    {
+      method: "DELETE",
+    }
+  );
+
+  return handleResponse(
+    response,
+    "Could not delete activity"
+  );
+}
