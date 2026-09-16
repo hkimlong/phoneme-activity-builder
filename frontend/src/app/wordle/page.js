@@ -12,7 +12,6 @@ import {
 import { useEffect, useState } from "react";
 import { generateWordleHTML } from "@/functions/generateHTML";
 
-
 export default function WordlePage() {
   const [phonemeWord, setPhonemeWord] = useState("");
   const [englishWord, setEnglishWord] = useState("");
@@ -28,313 +27,338 @@ export default function WordlePage() {
     .split(/\s+/)
     .filter((item) => item.length > 0);
 
-useEffect(() => {
-  async function loadSavedActivities() {
-    try {
-      const activities = await getActivities("WORDLE");
+  useEffect(() => {
+    async function loadSavedActivities() {
+      try {
+        const activities = await getActivities("WORDLE");
 
-      setSavedActivities(activities);
-      setSelectedActivityId("");
+        setSavedActivities(activities);
+        setSelectedActivityId("");
+      } catch (error) {
+        console.error(
+          "Failed to load saved Wordle activities:",
+          error
+        );
+      }
+    }
+
+    loadSavedActivities();
+  }, []);
+
+  async function saveWordleActivity() {
+    try {
+      setSaveMessage("");
+
+      const numericGuesses = Number(guesses);
+
+      if (
+        !Number.isInteger(numericGuesses) ||
+        numericGuesses < 1 ||
+        numericGuesses > 20
+      ) {
+        setSaveMessage(
+          "Number of guesses must be a whole number between 1 and 20."
+        );
+        return;
+      }
+
+      if (!englishWord.trim()) {
+        setSaveMessage("Please enter an English word.");
+        return;
+      }
+
+      if (phonemes.length === 0) {
+        setSaveMessage("Please enter at least one phoneme.");
+        return;
+      }
+
+      // Get the available word lists.
+      const wordLists = await getWordLists();
+
+      if (wordLists.length === 0) {
+        setSaveMessage("Please create a word list first.");
+        return;
+      }
+
+      const wordListId = wordLists[0].id;
+
+      // Save the English word and its phonemes.
+      const savedWord = await createWord({
+        englishWord: englishWord.trim(),
+        phonemes: phonemes,
+        wordListId: wordListId,
+      });
+
+      // Save the Wordle activity configuration.
+      const savedActivity = await createActivity({
+        name: `${englishWord.trim()} Wordle`,
+        type: "WORDLE",
+        difficulty: difficulty.toUpperCase(),
+        showHints: showHints === "yes",
+        numberOfGuesses: numericGuesses,
+        wordListId: wordListId,
+        wordId: savedWord.id,
+      });
+
+      setSavedActivities((currentActivities) => [
+        savedActivity,
+        ...currentActivities,
+      ]);
+
+      setSelectedActivityId(savedActivity.id);
+
+      setSaveMessage("Wordle activity saved successfully.");
     } catch (error) {
       console.error(
-        "Failed to load saved Wordle activities:",
+        "Failed to save Wordle activity:",
         error
       );
+
+      setSaveMessage(error.message);
     }
   }
 
-  loadSavedActivities();
-}, []); 
+  async function deleteSavedActivity() {
+    try {
+      if (!selectedActivityId) {
+        setSaveMessage(
+          "Please select a saved activity to delete."
+        );
+        return;
+      }
 
-async function saveWordleActivity() {
-  try {
-    setSaveMessage("");
+      const selectedActivity = savedActivities.find(
+        (activity) => activity.id === selectedActivityId
+      );
 
-    if (!englishWord.trim()) {
-      setSaveMessage("Please enter an English word.");
-      return;
+      if (!selectedActivity) {
+        setSaveMessage(
+          "Could not find the selected activity."
+        );
+        return;
+      }
+
+      const confirmed = window.confirm(
+        `Delete "${selectedActivity.name}"?`
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      await deleteActivity(selectedActivityId);
+
+      const remainingActivities = savedActivities.filter(
+        (activity) => activity.id !== selectedActivityId
+      );
+
+      setSavedActivities(remainingActivities);
+
+      if (remainingActivities.length > 0) {
+        const nextActivity = remainingActivities[0];
+
+        setSelectedActivityId(nextActivity.id);
+
+        if (nextActivity.word) {
+          setEnglishWord(nextActivity.word.englishWord);
+
+          setPhonemeWord(
+            [...nextActivity.word.phonemes]
+              .sort((a, b) => a.position - b.position)
+              .map((phoneme) => phoneme.symbol)
+              .join(" ")
+          );
+        }
+
+        setDifficulty(
+          nextActivity.difficulty.toLowerCase()
+        );
+
+        setShowHints(
+          nextActivity.showHints ? "yes" : "no"
+        );
+
+        setGuesses(
+          nextActivity.numberOfGuesses ?? 6
+        );
+      } else {
+        setSelectedActivityId("");
+      }
+
+      setSaveMessage(
+        "Wordle activity deleted successfully."
+      );
+    } catch (error) {
+      console.error(
+        "Failed to delete Wordle activity:",
+        error
+      );
+
+      setSaveMessage(
+        "Failed to delete Wordle activity."
+      );
     }
-
-    if (phonemes.length === 0) {
-      setSaveMessage("Please enter at least one phoneme.");
-      return;
-    }
-
-    // Get the available word lists.
-    const wordLists = await getWordLists();
-
-    if (wordLists.length === 0) {
-      setSaveMessage("Please create a word list first.");
-      return;
-    }
-
-    const wordListId = wordLists[0].id;
-
-    // Save the English word and its phonemes.
-    const savedWord = await createWord({
-     englishWord: englishWord.trim(),
-     phonemes: phonemes,
-     wordListId: wordListId,
-    });
-
-    // Save the Wordle activity configuration.
-    const savedActivity = await createActivity({
-     name: `${englishWord.trim()} Wordle`,
-     type: "WORDLE",
-     difficulty: difficulty.toUpperCase(),
-     showHints: showHints === "yes",
-     numberOfGuesses: Number(guesses),
-     wordListId: wordListId,
-     wordId: savedWord.id,
-    });
-
-    setSavedActivities((currentActivities) => [
-      savedActivity,
-      ...currentActivities,
-    ]);
-
-    setSelectedActivityId(savedActivity.id);
-
-    setSaveMessage("Wordle activity saved successfully.");
-  } catch (error) {
-    console.error(
-      "Failed to save Wordle activity:",
-      error
-    );
-
-    setSaveMessage(error.message);
   }
-}
 
-async function deleteSavedActivity() {
-  try {
-    if (!selectedActivityId) {
-      setSaveMessage(
-        "Please select a saved activity to delete."
+  async function updateSavedActivity() {
+    try {
+      setSaveMessage("");
+
+      const numericGuesses = Number(guesses);
+
+      if (
+        !Number.isInteger(numericGuesses) ||
+        numericGuesses < 1 ||
+        numericGuesses > 20
+      ) {
+        setSaveMessage(
+          "Number of guesses must be a whole number between 1 and 20."
+        );
+        return;
+      }
+
+      if (!selectedActivityId) {
+        setSaveMessage(
+          "Please select a saved activity to update."
+        );
+        return;
+      }
+
+      const selectedActivity = savedActivities.find(
+        (activity) => activity.id === selectedActivityId
       );
-      return;
-    }
 
-    const selectedActivity = savedActivities.find(
-      (activity) => activity.id === selectedActivityId
-    );
+      if (!selectedActivity) {
+        setSaveMessage(
+          "Could not find the selected activity."
+        );
+        return;
+      }
 
-    if (!selectedActivity) {
-      setSaveMessage(
-        "Could not find the selected activity."
+      if (!selectedActivity.word) {
+        setSaveMessage(
+          "The selected activity does not contain a saved word."
+        );
+        return;
+      }
+
+      if (!englishWord.trim()) {
+        setSaveMessage(
+          "Please enter the English equivalent."
+        );
+        return;
+      }
+
+      const updatedPhonemes = phonemeWord
+        .trim()
+        .split(/\s+/)
+        .filter((item) => item.length > 0);
+
+      if (updatedPhonemes.length === 0) {
+        setSaveMessage(
+          "Please enter a phoneme word."
+        );
+        return;
+      }
+
+      await updateWord({
+        id: selectedActivity.word.id,
+        englishWord: englishWord.trim(),
+        phonemes: updatedPhonemes,
+        wordListId: selectedActivity.word.wordListId,
+      });
+
+      await updateActivity({
+        id: selectedActivityId,
+        name: `${englishWord.trim()} Wordle`,
+        type: "WORDLE",
+        difficulty: difficulty.toUpperCase(),
+        showHints: showHints === "yes",
+        numberOfGuesses: numericGuesses,
+        wordId: selectedActivity.word.id,
+      });
+
+      const refreshedActivities = await getActivities("WORDLE");
+
+      setSavedActivities(refreshedActivities);
+
+      const refreshedActivity = refreshedActivities.find(
+        (activity) => activity.id === selectedActivityId
       );
-      return;
-    }
 
-    const confirmed = window.confirm(
-      `Delete "${selectedActivity.name}"?`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    await deleteActivity(selectedActivityId);
-
-    const remainingActivities = savedActivities.filter(
-      (activity) => activity.id !== selectedActivityId
-    );
-
-    setSavedActivities(remainingActivities);
-
-    if (remainingActivities.length > 0) {
-      const nextActivity = remainingActivities[0];
-
-      setSelectedActivityId(nextActivity.id);
-
-      if (nextActivity.word) {
-        setEnglishWord(nextActivity.word.englishWord);
+      if (refreshedActivity && refreshedActivity.word) {
+        setEnglishWord(
+          refreshedActivity.word.englishWord
+        );
 
         setPhonemeWord(
-          [...nextActivity.word.phonemes]
+          [...refreshedActivity.word.phonemes]
             .sort((a, b) => a.position - b.position)
             .map((phoneme) => phoneme.symbol)
             .join(" ")
         );
+
+        setDifficulty(
+          refreshedActivity.difficulty.toLowerCase()
+        );
+
+        setShowHints(
+          refreshedActivity.showHints ? "yes" : "no"
+        );
+
+        setGuesses(
+          refreshedActivity.numberOfGuesses ?? 6
+        );
       }
 
-      setDifficulty(
-        nextActivity.difficulty.toLowerCase()
+      setSaveMessage(
+        "Wordle activity updated successfully."
+      );
+    } catch (error) {
+      console.error(
+        "Failed to update Wordle activity:",
+        error
       );
 
-      setShowHints(
-        nextActivity.showHints ? "yes" : "no"
-      );
+      setSaveMessage(error.message);
+    }
+  }
 
-      setGuesses(
-        nextActivity.numberOfGuesses ?? 6
-      );
-    } else {
-      setSelectedActivityId("");
+  function loadActivityIntoPreview(activityId) {
+    setSelectedActivityId(activityId);
+
+    const activity = savedActivities.find(
+      (item) => item.id === activityId
+    );
+
+    if (!activity) {
+      return;
     }
 
-    setSaveMessage(
-      "Wordle activity deleted successfully."
-    );
-  } catch (error) {
-    console.error(
-      "Failed to delete Wordle activity:",
-      error
-    );
+    if (!activity.word) {
+      setSaveMessage(
+        "This older activity is not linked to a specific word."
+      );
+      return;
+    }
 
-    setSaveMessage(
-      "Failed to delete Wordle activity."
-    );
-  }
-}
+    const phonemeText = [...activity.word.phonemes]
+      .sort((a, b) => a.position - b.position)
+      .map((phoneme) => phoneme.symbol)
+      .join(" ");
 
-async function updateSavedActivity() {
-  try {
+    setPhonemeWord(phonemeText);
+    setEnglishWord(activity.word.englishWord);
+    setDifficulty(activity.difficulty.toLowerCase());
+    setShowHints(activity.showHints ? "yes" : "no");
+    setGuesses(activity.numberOfGuesses ?? 6);
+
     setSaveMessage("");
-
-    if (!selectedActivityId) {
-      setSaveMessage(
-        "Please select a saved activity to update."
-      );
-      return;
-    }
-
-    const selectedActivity = savedActivities.find(
-      (activity) => activity.id === selectedActivityId
-    );
-
-    if (!selectedActivity) {
-      setSaveMessage(
-        "Could not find the selected activity."
-      );
-      return;
-    }
-
-    if (!selectedActivity.word) {
-      setSaveMessage(
-        "The selected activity does not contain a saved word."
-      );
-      return;
-    }
-
-    if (!englishWord.trim()) {
-      setSaveMessage(
-        "Please enter the English equivalent."
-      );
-      return;
-    }
-
-    const phonemes = phonemeWord
-      .trim()
-      .split(/\s+/)
-      .filter((item) => item.length > 0);
-
-    if (phonemes.length === 0) {
-      setSaveMessage(
-        "Please enter a phoneme word."
-      );
-      return;
-    }
-
-    await updateWord({
-      id: selectedActivity.word.id,
-      englishWord: englishWord.trim(),
-      phonemes: phonemes,
-      wordListId: selectedActivity.word.wordListId,
-    });
-
-    await updateActivity({
-      id: selectedActivityId,
-      name: `${englishWord.trim()} Wordle`,
-      type: "WORDLE",
-      difficulty: difficulty.toUpperCase(),
-      showHints: showHints === "yes",
-      numberOfGuesses: Number(guesses),
-      wordId: selectedActivity.word.id,
-    });
-
-    const refreshedActivities = await getActivities("WORDLE");
-
-    setSavedActivities(refreshedActivities);
-
-    const refreshedActivity = refreshedActivities.find(
-      (activity) => activity.id === selectedActivityId
-    );
-
-    if (refreshedActivity && refreshedActivity.word) {
-      setEnglishWord(
-        refreshedActivity.word.englishWord
-      );
-
-      setPhonemeWord(
-        [...refreshedActivity.word.phonemes]
-          .sort((a, b) => a.position - b.position)
-          .map((phoneme) => phoneme.symbol)
-          .join(" ")
-      );
-
-      setDifficulty(
-        refreshedActivity.difficulty.toLowerCase()
-      );
-
-      setShowHints(
-        refreshedActivity.showHints ? "yes" : "no"
-      );
-
-      setGuesses(
-        refreshedActivity.numberOfGuesses ?? 6
-      );
-    }
-
-    setSaveMessage(
-      "Wordle activity updated successfully."
-    );
-  } catch (error) {
-    console.error(
-      "Failed to update Wordle activity:",
-      error
-    );
-
-    setSaveMessage(error.message);
   }
-}
-
-function loadActivityIntoPreview(activityId) {
-  setSelectedActivityId(activityId);
-
-  const activity = savedActivities.find(
-    (item) => item.id === activityId
-  );
-
-  if (!activity) {
-    return;
-  }
-
-  if (!activity.word) {
-    setSaveMessage(
-      "This older activity is not linked to a specific word."
-    );
-    return;
-  }
-
-  const phonemeText = activity.word.phonemes
-    .sort((a, b) => a.position - b.position)
-    .map((phoneme) => phoneme.symbol)
-    .join(" ");
-
-  setPhonemeWord(phonemeText);
-  setEnglishWord(activity.word.englishWord);
-  setDifficulty(activity.difficulty.toLowerCase());
-  setShowHints(activity.showHints ? "yes" : "no");
-  setGuesses(activity.numberOfGuesses ?? 6);
-
-  setSaveMessage("");
-}
 
   return (
     <section className="builder-page">
       <div className="builder-content">
-
         <div className="builder-form">
           <h2>Wordle Builder</h2>
 
@@ -432,7 +456,8 @@ function loadActivityIntoPreview(activityId) {
               id="guesses"
               type="number"
               min="1"
-              max="10"
+              max="20"
+              step="1"
               value={guesses}
               onChange={(e) => setGuesses(e.target.value)}
             />
@@ -469,7 +494,6 @@ function loadActivityIntoPreview(activityId) {
               DELETE SAVED ACTIVITY
             </button>
           </div>
-
         </div>
 
         <div className="preview-panel">
@@ -489,15 +513,18 @@ function loadActivityIntoPreview(activityId) {
                   }
 
                   const savedActivity = activities.find(
-                    (activity) => activity.id === selectedActivityId
+                    (activity) =>
+                      activity.id === selectedActivityId
                   );
 
                   if (!savedActivity) {
-                    alert("Please select a saved Wordle activity.");
+                    alert(
+                      "Please select a saved Wordle activity."
+                    );
                     return;
                   }
 
-                if (!savedActivity.word) {
+                  if (!savedActivity.word) {
                     alert(
                       "This older activity is not linked to a specific word. Please save a new activity."
                     );
@@ -506,7 +533,9 @@ function loadActivityIntoPreview(activityId) {
 
                   const savedWord = savedActivity.word;
 
-                  const savedPhonemeWord = savedWord.phonemes
+                  const savedPhonemeWord = [
+                    ...savedWord.phonemes,
+                  ]
                     .sort((a, b) => a.position - b.position)
                     .map((phoneme) => phoneme.symbol)
                     .join(" ");
@@ -520,31 +549,32 @@ function loadActivityIntoPreview(activityId) {
                   );
                 } catch (error) {
                   console.error(error);
-                  alert("Failed to generate Wordle HTML from saved data.");
+                  alert(
+                    "Failed to generate Wordle HTML from saved data."
+                  );
                 }
               }}
             >
               Generate HTML
             </button>
 
-          <button
-            type="button"
+            <button
+              type="button"
               className="generate-button"
-                  onClick={saveWordleActivity}
-                >
-                  Save Activity
-           </button>
+              onClick={saveWordleActivity}
+            >
+              Save Activity
+            </button>
 
-           <button
-            type="button"
-            className="secondary-button preview-action-button"
-            onClick={updateSavedActivity}
-          >
-            UPDATE ACTIVITY
-          </button>
+            <button
+              type="button"
+              className="secondary-button preview-action-button"
+              onClick={updateSavedActivity}
+            >
+              UPDATE ACTIVITY
+            </button>
 
-
-	   {saveMessage && <p>{saveMessage}</p>}
+            {saveMessage && <p>{saveMessage}</p>}
           </div>
 
           <div className="wordle-preview">
@@ -567,7 +597,8 @@ function loadActivityIntoPreview(activityId) {
 
             <div className="preview-details">
               <p>
-                <strong>English:</strong> {englishWord || "Not set"}
+                <strong>English:</strong>{" "}
+                {englishWord || "Not set"}
               </p>
 
               <p>
@@ -584,7 +615,6 @@ function loadActivityIntoPreview(activityId) {
             </div>
           </div>
         </div>
-
       </div>
     </section>
   );

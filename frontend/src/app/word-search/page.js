@@ -126,6 +126,19 @@ export default function WordSearchPage() {
     try {
       setSaveMessage("");
 
+      const numericGridSize = Number(gridSize);
+
+      if (
+        !Number.isInteger(numericGridSize) ||
+        numericGridSize < 5 ||
+        numericGridSize > 20
+      ) {
+        setSaveMessage(
+          "Grid size must be a whole number between 5 and 20."
+        );
+        return;
+      }
+
       if (!selectedActivityId) {
         setSaveMessage(
           "Please select a saved activity to update."
@@ -206,7 +219,7 @@ export default function WordSearchPage() {
         type: "WORD_SEARCH",
         difficulty: difficulty.toUpperCase(),
         showHints: true,
-        gridSize: Number(gridSize),
+        gridSize: numericGridSize,
         puzzleData: puzzle,
       });
 
@@ -253,77 +266,90 @@ export default function WordSearchPage() {
   }
 
   async function saveWordSearchActivity() {
-   try {
-    setSaveMessage("");
+    try {
+      setSaveMessage("");
 
-    if (!puzzle) {
-      setSaveMessage(
-        "Please regenerate the grid before saving the activity."
+      const numericGridSize = Number(gridSize);
+
+      if (
+        !Number.isInteger(numericGridSize) ||
+        numericGridSize < 5 ||
+        numericGridSize > 20
+      ) {
+        setSaveMessage(
+          "Grid size must be a whole number between 5 and 20."
+        );
+        return;
+      }
+
+      if (!puzzle) {
+        setSaveMessage(
+          "Please regenerate the grid before saving the activity."
+        );
+        return;
+      }
+
+      const cleanedWords = words.map((word) => ({
+        english: word.english.trim(),
+        phonemes: word.phonemes
+          .trim()
+          .split(/\s+/)
+          .filter((item) => item.length > 0),
+      }));
+
+      const hasInvalidWord = cleanedWords.some(
+        (word) =>
+          word.english.length === 0 ||
+          word.phonemes.length === 0
       );
-      return;
-    }
 
-    const cleanedWords = words.map((word) => ({
-      english: word.english.trim(),
-      phonemes: word.phonemes
-        .trim()
-        .split(/\s+/)
-        .filter((item) => item.length > 0),
-    }));
+      if (hasInvalidWord) {
+        setSaveMessage(
+          "Please enter a phoneme word and English equivalent for all five words."
+        );
+        return;
+      }
 
-    const hasInvalidWord = cleanedWords.some(
-      (word) =>
-        word.english.length === 0 ||
-        word.phonemes.length === 0
-    );
-
-    if (hasInvalidWord) {
-      setSaveMessage(
-        "Please enter a phoneme word and English equivalent for all five words."
+      const savedWordList = await createWordList(
+        `Word Search ${new Date().toLocaleString()}`
       );
-      return;
-    }
 
-    const savedWordList = await createWordList(
-      `Word Search ${new Date().toLocaleString()}`
-    );
+      for (const word of cleanedWords) {
+        await createWord({
+          englishWord: word.english,
+          phonemes: word.phonemes,
+          wordListId: savedWordList.id,
+        });
+      }
 
-    for (const word of cleanedWords) {
-      await createWord({
-        englishWord: word.english,
-        phonemes: word.phonemes,
+      const savedActivity = await createActivity({
+        name: `Word Search ${new Date().toLocaleString()}`,
+        type: "WORD_SEARCH",
+        difficulty: difficulty.toUpperCase(),
+        showHints: true,
+        gridSize: numericGridSize,
+        puzzleData: puzzle,
         wordListId: savedWordList.id,
       });
+
+      setSavedActivities((currentActivities) => [
+        savedActivity,
+        ...currentActivities,
+      ]);
+
+      setSelectedActivityId(savedActivity.id);
+
+      setSaveMessage(
+        "Word Search activity saved successfully."
+      );
+    } catch (error) {
+      console.error(
+        "Failed to save Word Search activity:",
+        error
+      );
+
+      setSaveMessage(error.message);
     }
-
-    const savedActivity = await createActivity({
-      name: `Word Search ${new Date().toLocaleString()}`,
-      type: "WORD_SEARCH",
-      difficulty: difficulty.toUpperCase(),
-      showHints: true,
-      gridSize: Number(gridSize),
-      puzzleData: puzzle,
-      wordListId: savedWordList.id,
-    });
-
-    setSavedActivities((currentActivities) => [
-      savedActivity,
-      ...currentActivities,
-    ]);
-
-    setSelectedActivityId(savedActivity.id);
-
-    setSaveMessage(
-      "Word Search activity saved successfully."
-    );
-  } catch (error) {
-    console.error(
-      "Failed to save Word Search activity:",
-      error
-    );
-
-    setSaveMessage(error.message);
-  }
   }
 
   function loadSavedActivity(activityId) {
@@ -371,10 +397,25 @@ export default function WordSearchPage() {
   }
 
   function regenerateGrid() {
+    setSaveMessage("");
+
+    const numericGridSize = Number(gridSize);
+
+    if (
+      !Number.isInteger(numericGridSize) ||
+      numericGridSize < 5 ||
+      numericGridSize > 20
+    ) {
+      setSaveMessage(
+        "Grid size must be a whole number between 5 and 20."
+      );
+      return;
+    }
+
     const newPuzzle = generateWordSearchGrid(
       words,
       difficulty,
-      gridSize
+      numericGridSize
     );
 
     setPuzzle(newPuzzle);
@@ -504,8 +545,8 @@ export default function WordSearchPage() {
             <input
               id="gridSize"
               type="number"
-              min="6"
-              max="15"
+              min="5"
+              max="20"
               value={gridSize}
               onChange={(e) => setGridSize(e.target.value)}
             />
