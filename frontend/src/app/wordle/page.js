@@ -3,6 +3,7 @@
 import {
   getWordLists,
   getActivities,
+  createWordList,
   createWord,
   createActivity,
   deleteActivity,
@@ -75,12 +76,14 @@ export default function WordlePage() {
       // Get the available word lists.
       const wordLists = await getWordLists();
 
-      if (wordLists.length === 0) {
-        setSaveMessage("Please create a word list first.");
-        return;
-      }
+      let wordListId;
 
-      const wordListId = wordLists[0].id;
+      if (wordLists.length === 0) {
+        const newWordList = await createWordList("Wordle Words");
+        wordListId = newWordList.id;
+      } else {
+        wordListId = wordLists[0].id;
+      }
 
       // Save the English word and its phonemes.
       const savedWord = await createWord({
