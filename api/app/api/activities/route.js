@@ -6,6 +6,7 @@ function getCorsHeaders(request) {
   const allowedOrigins = [
     "http://localhost:3000",
     "http://localhost",
+    "http://44.205.173.19",
   ];
 
   return {

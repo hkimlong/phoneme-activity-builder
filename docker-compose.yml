@@ -36,7 +36,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:4080
+        NEXT_PUBLIC_API_URL: http://44.205.173.19:4080
     container_name: phoneme-frontend
     restart: unless-stopped
     ports:
