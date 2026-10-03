@@ -266,13 +266,12 @@ export default function Dashboard() {
             </h2>
 
             <p>
-              Saved Wordle and Word Search activity records retrieved
-              from the database.
+              Showing the 5 most recently saved activities.
             </p>
           </div>
 
           <p>
-            <strong>Total stored:</strong> {activities.length}
+            <strong>Total saved activities:</strong> {activities.length}
           </p>
         </div>
 
@@ -294,7 +293,7 @@ export default function Dashboard() {
               </thead>
 
               <tbody>
-                {activities.map((activity) => (
+                {activities.slice(0, 5).map((activity) => (
                   <tr key={activity.id}>
                     <td>{activity.name}</td>
 
