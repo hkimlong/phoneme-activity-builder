@@ -1,6 +1,31 @@
 import { prisma } from "../../lib/prisma";
 
-export async function GET() {
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost",
+  "http://44.205.173.19",
+];
+
+function getCorsHeaders(request) {
+  const origin = request.headers.get("origin");
+
+  return {
+    "Access-Control-Allow-Origin": allowedOrigins.includes(origin)
+      ? origin
+      : allowedOrigins[0],
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  };
+}
+
+export async function OPTIONS(request) {
+  return new Response(null, {
+    status: 204,
+    headers: getCorsHeaders(request),
+  });
+}
+
+export async function GET(request) {
   try {
     await prisma.$queryRaw`SELECT 1`;
 
@@ -99,6 +124,7 @@ export async function GET() {
       },
       {
         status: 200,
+        headers: getCorsHeaders(request),
       }
     );
   } catch (error) {
@@ -112,6 +138,7 @@ export async function GET() {
       },
       {
         status: 503,
+        headers: getCorsHeaders(request),
       }
     );
   }

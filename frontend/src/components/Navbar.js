@@ -12,6 +12,7 @@ export default function Navbar() {
           <Link href="/wordle">Wordle</Link>
           <Link href="/word-search">Word Search</Link>
           <Link href="/about">About</Link>
+          <Link href="/dashboard">Activity Overview</Link>
           <Link href="/settings">Settings</Link>
         </div>
 

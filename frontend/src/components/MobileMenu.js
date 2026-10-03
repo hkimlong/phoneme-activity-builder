@@ -42,6 +42,10 @@ export default function MobileMenu() {
             About
           </Link>
 
+          <Link href="/dashboard" onClick={closeMenu}>
+            Activity Overview
+          </Link>
+
           <Link href="/settings" onClick={closeMenu}>
             Settings
           </Link>
