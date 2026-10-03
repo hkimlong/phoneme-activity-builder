@@ -583,9 +583,15 @@ export default function WordlePage() {
                       success: true,
                       message: "Wordle HTML generated successfully",
                     });
+
+                    await createUsageEvent({
+                      eventType: "ACTIVITY_USED",
+                      activityType: "WORDLE",
+                      message: "Wordle activity used",
+                    });
                   } catch (monitoringError) {
                     console.error(
-                      "Failed to record successful Wordle generation:",
+                      "Failed to record Wordle usage monitoring:",
                       monitoringError
                     );
                   }

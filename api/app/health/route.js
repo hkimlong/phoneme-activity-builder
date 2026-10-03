@@ -54,18 +54,14 @@ export async function GET() {
       prisma.usageEvent.count({
         where: {
           activityType: "WORDLE",
-          eventType: {
-            in: ["GENERATION", "ACTIVITY_USED"],
-          },
+          eventType: "ACTIVITY_USED",
         },
       }),
 
       prisma.usageEvent.count({
         where: {
           activityType: "WORD_SEARCH",
-          eventType: {
-            in: ["GENERATION", "ACTIVITY_USED"],
-          },
+          eventType: "ACTIVITY_USED",
         },
       }),
     ]);
@@ -94,6 +90,8 @@ export async function GET() {
           wordleCreated,
           wordSearchCreated,
           averageTimeOnPageSeconds: averageTimeOnPage,
+          wordleUsage,
+          wordSearchUsage,
           mostUsedActivityType,
           successfulGenerations,
           failedGenerations,

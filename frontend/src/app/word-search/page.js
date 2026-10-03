@@ -653,9 +653,15 @@ export default function WordSearchPage() {
                         success: true,
                         message: "Word Search HTML generated successfully",
                       });
+
+                      await createUsageEvent({
+                        eventType: "ACTIVITY_USED",
+                        activityType: "WORD_SEARCH",
+                        message: "Word Search activity used",
+                      });
                     } catch (monitoringError) {
                       console.error(
-                        "Failed to record successful Word Search generation:",
+                        "Failed to record Word Search usage monitoring:",
                         monitoringError
                       );
                     }
