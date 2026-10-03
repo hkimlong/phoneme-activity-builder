@@ -199,3 +199,42 @@ export async function updateWord({
     "Could not update word"
   );
 }
+// USAGE EVENTS
+
+export async function getUsageEvents() {
+  const response = await fetch(`${API_URL}/api/usage-events`);
+
+  return handleResponse(
+    response,
+    "Could not load usage events"
+  );
+}
+
+export async function createUsageEvent({
+  eventType,
+  activityType = null,
+  page = null,
+  duration = null,
+  success = null,
+  message = null,
+}) {
+  const response = await fetch(`${API_URL}/api/usage-events`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      eventType,
+      activityType,
+      page,
+      duration,
+      success,
+      message,
+    }),
+  });
+
+  return handleResponse(
+    response,
+    "Could not save usage event"
+  );
+}

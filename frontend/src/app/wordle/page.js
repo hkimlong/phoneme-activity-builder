@@ -9,6 +9,7 @@ import {
   deleteActivity,
   updateActivity,
   updateWord,
+  createUsageEvent,
 } from "@/functions/api";
 import { useEffect, useState } from "react";
 import { generateWordleHTML } from "@/functions/generateHTML";
@@ -550,8 +551,37 @@ export default function WordlePage() {
                     savedActivity.showHints ? "yes" : "no",
                     savedActivity.numberOfGuesses
                   );
+
+                  try {
+                    await createUsageEvent({
+                      eventType: "GENERATION",
+                      activityType: "WORDLE",
+                      success: true,
+                      message: "Wordle HTML generated successfully",
+                    });
+                  } catch (monitoringError) {
+                    console.error(
+                      "Failed to record successful Wordle generation:",
+                      monitoringError
+                    );
+                  }
                 } catch (error) {
                   console.error(error);
+
+                  try {
+                    await createUsageEvent({
+                      eventType: "GENERATION",
+                      activityType: "WORDLE",
+                      success: false,
+                      message: "Wordle HTML generation failed",
+                    });
+                  } catch (monitoringError) {
+                    console.error(
+                      "Failed to record Wordle generation error:",
+                      monitoringError
+                    );
+                  }
+
                   alert(
                     "Failed to generate Wordle HTML from saved data."
                   );
