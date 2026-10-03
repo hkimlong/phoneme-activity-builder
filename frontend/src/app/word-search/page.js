@@ -11,6 +11,7 @@ import {
   deleteActivity,
   updateActivity,
   updateWord as updateSavedWord,
+  createUsageEvent,
 } from "@/functions/api";
 
 export default function WordSearchPage() {
@@ -620,11 +621,39 @@ export default function WordSearchPage() {
                       savedActivity.difficulty.toLowerCase(),
                       savedActivity.gridSize
                     );
+
+                    try {
+                      await createUsageEvent({
+                        eventType: "GENERATION",
+                        activityType: "WORD_SEARCH",
+                        success: true,
+                        message: "Word Search HTML generated successfully",
+                      });
+                    } catch (monitoringError) {
+                      console.error(
+                        "Failed to record successful Word Search generation:",
+                        monitoringError
+                      );
+                    }
                   } catch (error) {
                     console.error(
                       "Failed to generate Word Search HTML:",
                       error
                     );
+
+                    try {
+                      await createUsageEvent({
+                        eventType: "GENERATION",
+                        activityType: "WORD_SEARCH",
+                        success: false,
+                        message: "Word Search HTML generation failed",
+                      });
+                    } catch (monitoringError) {
+                      console.error(
+                        "Failed to record Word Search generation error:",
+                        monitoringError
+                      );
+                    }
 
                     alert(
                       "Failed to generate the Word Search HTML."
