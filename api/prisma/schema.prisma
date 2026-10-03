@@ -60,3 +60,21 @@ enum Difficulty {
   MEDIUM
   HARD
 }
+
+model UsageEvent {
+  id           String       @id @default(uuid())
+  eventType    EventType
+  activityType ActivityType?
+  page         String?
+  duration     Int?
+  success      Boolean?
+  message      String?
+  createdAt    DateTime     @default(now())
+}
+
+enum EventType {
+  PAGE_VIEW
+  ACTIVITY_USED
+  GENERATION
+  SIMULATED_INPUT
+}
