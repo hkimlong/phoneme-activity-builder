@@ -209,6 +209,53 @@ export default function Dashboard() {
       </section>
 
       <section
+        className="dashboard-alerts"
+        aria-labelledby="alerts-heading"
+      >
+        <h2 id="alerts-heading">Operational Alerts</h2>
+
+        {metrics.failedGenerations > 0 ? (
+          <div
+            className="dashboard-alert dashboard-alert-warning"
+            role="alert"
+          >
+            <strong>Generation Warning</strong>
+
+            <p>
+              {metrics.failedGenerations} failed activity{" "}
+              {metrics.failedGenerations === 1
+                ? "generation has"
+                : "generations have"}{" "}
+              been recorded. Review activity data and generation
+              behaviour.
+            </p>
+          </div>
+        ) : (
+          <div className="dashboard-alert dashboard-alert-ok">
+            <strong>System Operating Normally</strong>
+
+            <p>
+              No failed activity generations have been recorded.
+            </p>
+          </div>
+        )}
+
+        {activities.length === 0 && (
+          <div
+            className="dashboard-alert dashboard-alert-warning"
+            role="alert"
+          >
+            <strong>No Stored Activities</strong>
+
+            <p>
+              No Wordle or Word Search activities are currently
+              stored in the database.
+            </p>
+          </div>
+        )}
+      </section>
+
+      <section
         className="stored-activities-section"
         aria-labelledby="stored-activities-heading"
       >

@@ -1499,3 +1499,37 @@ html[data-theme="dark"] {
     min-width: 700px;
   }
 }
+
+/* =========================
+   OPERATIONAL ALERTS
+========================= */
+
+.dashboard-alerts {
+  margin-top: 35px;
+}
+
+.dashboard-alert {
+  margin-top: 15px;
+  padding: 18px 20px;
+  border: 2px solid;
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.dashboard-alert strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 1.05rem;
+}
+
+.dashboard-alert p {
+  margin: 0;
+}
+
+.dashboard-alert-warning {
+  border-color: #b45309;
+}
+
+.dashboard-alert-ok {
+  border-color: #15803d;
+}
