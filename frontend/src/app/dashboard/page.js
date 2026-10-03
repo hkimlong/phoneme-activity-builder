@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getActivities } from "@/functions/api";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:4080";
 
 export default function Dashboard() {
   const [healthData, setHealthData] = useState(null);
+  const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -15,19 +17,37 @@ export default function Dashboard() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_URL}/health`);
+      const [
+        healthResponse,
+        wordleActivities,
+        wordSearchActivities,
+      ] = await Promise.all([
+        fetch(`${API_URL}/health`),
+        getActivities("WORDLE"),
+        getActivities("WORD_SEARCH"),
+      ]);
 
-      if (!response.ok) {
-        throw new Error("Could not load dashboard data");
+      if (!healthResponse.ok) {
+        throw new Error("Could not load health data");
       }
 
-      const data = await response.json();
+      const health = await healthResponse.json();
 
-      setHealthData(data);
+      const combinedActivities = [
+        ...wordleActivities,
+        ...wordSearchActivities,
+      ].sort(
+        (a, b) =>
+          new Date(b.createdAt) - new Date(a.createdAt)
+      );
+
+      setHealthData(health);
+      setActivities(combinedActivities);
     } catch (error) {
       console.error("Failed to load dashboard:", error);
+
       setError(
-        "Dashboard data could not be loaded. Please try again."
+        "Activity Overview data could not be loaded. Please try again."
       );
     } finally {
       setLoading(false);
@@ -42,7 +62,7 @@ export default function Dashboard() {
     return (
       <section className="dashboard-page">
         <h1>Activity Overview</h1>
-        <p>Loading dashboard data...</p>
+        <p>Loading activity data...</p>
       </section>
     );
   }
@@ -74,8 +94,9 @@ export default function Dashboard() {
       <div className="dashboard-heading">
         <div>
           <h1>Activity Overview</h1>
+
           <p>
-            Monitor activity creation, usage, generation results and
+            Monitor stored activities, usage, generation results and
             application health.
           </p>
         </div>
@@ -116,6 +137,7 @@ export default function Dashboard() {
         <div className="dashboard-grid">
           <article className="dashboard-card">
             <h3>Wordle Activities Created</h3>
+
             <p className="dashboard-value">
               {metrics.wordleCreated}
             </p>
@@ -123,6 +145,7 @@ export default function Dashboard() {
 
           <article className="dashboard-card">
             <h3>Word Search Activities Created</h3>
+
             <p className="dashboard-value">
               {metrics.wordSearchCreated}
             </p>
@@ -130,6 +153,7 @@ export default function Dashboard() {
 
           <article className="dashboard-card">
             <h3>Wordle Uses</h3>
+
             <p className="dashboard-value">
               {metrics.wordleUsage}
             </p>
@@ -137,6 +161,7 @@ export default function Dashboard() {
 
           <article className="dashboard-card">
             <h3>Word Search Uses</h3>
+
             <p className="dashboard-value">
               {metrics.wordSearchUsage}
             </p>
@@ -150,6 +175,7 @@ export default function Dashboard() {
         <div className="dashboard-grid">
           <article className="dashboard-card">
             <h3>Most-Used Activity</h3>
+
             <p className="dashboard-value dashboard-value-text">
               {formatActivityType(metrics.mostUsedActivityType)}
             </p>
@@ -157,6 +183,7 @@ export default function Dashboard() {
 
           <article className="dashboard-card">
             <h3>Average Time on Page</h3>
+
             <p className="dashboard-value">
               {metrics.averageTimeOnPageSeconds}
               <span className="dashboard-unit"> seconds</span>
@@ -165,6 +192,7 @@ export default function Dashboard() {
 
           <article className="dashboard-card">
             <h3>Successful Generations</h3>
+
             <p className="dashboard-value">
               {metrics.successfulGenerations}
             </p>
@@ -172,11 +200,78 @@ export default function Dashboard() {
 
           <article className="dashboard-card">
             <h3>Failed Generations</h3>
+
             <p className="dashboard-value">
               {metrics.failedGenerations}
             </p>
           </article>
         </div>
+      </section>
+
+      <section
+        className="stored-activities-section"
+        aria-labelledby="stored-activities-heading"
+      >
+        <div className="stored-activities-heading">
+          <div>
+            <h2 id="stored-activities-heading">
+              Stored Activities
+            </h2>
+
+            <p>
+              Saved Wordle and Word Search activity records retrieved
+              from the database.
+            </p>
+          </div>
+
+          <p>
+            <strong>Total stored:</strong> {activities.length}
+          </p>
+        </div>
+
+        {activities.length === 0 ? (
+          <div className="dashboard-empty-message">
+            <p>No stored activities are available.</p>
+          </div>
+        ) : (
+          <div className="activity-table-wrapper">
+            <table className="activity-table">
+              <thead>
+                <tr>
+                  <th scope="col">Activity</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Difficulty</th>
+                  <th scope="col">Stored Data</th>
+                  <th scope="col">Created</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {activities.map((activity) => (
+                  <tr key={activity.id}>
+                    <td>{activity.name}</td>
+
+                    <td>
+                      {formatActivityType(activity.type)}
+                    </td>
+
+                    <td>
+                      {formatDifficulty(activity.difficulty)}
+                    </td>
+
+                    <td>
+                      {getActivityDetails(activity)}
+                    </td>
+
+                    <td>
+                      {formatDate(activity.createdAt)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </section>
   );
@@ -196,4 +291,56 @@ function formatActivityType(activityType) {
   }
 
   return "No usage data";
+}
+
+function formatDifficulty(difficulty) {
+  if (!difficulty) {
+    return "Not set";
+  }
+
+  return (
+    difficulty.charAt(0) +
+    difficulty.slice(1).toLowerCase()
+  );
+}
+
+function getActivityDetails(activity) {
+  if (activity.type === "WORDLE") {
+    const word = activity.word;
+
+    if (!word) {
+      return `${activity.numberOfGuesses || 0} guesses`;
+    }
+
+    const phonemes = [...(word.phonemes || [])]
+      .sort((a, b) => a.position - b.position)
+      .map((phoneme) => phoneme.symbol)
+      .join(" ");
+
+    return `${word.englishWord} /${phonemes}/ · ${
+      activity.numberOfGuesses || 0
+    } guesses`;
+  }
+
+  if (activity.type === "WORD_SEARCH") {
+    const wordCount = activity.wordList?.words?.length || 0;
+
+    return `${activity.gridSize || 0} × ${
+      activity.gridSize || 0
+    } grid · ${wordCount} words`;
+  }
+
+  return "No details";
+}
+
+function formatDate(dateValue) {
+  if (!dateValue) {
+    return "Unknown";
+  }
+
+  return new Date(dateValue).toLocaleDateString("en-AU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 }

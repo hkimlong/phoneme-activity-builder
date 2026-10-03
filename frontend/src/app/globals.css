@@ -1406,3 +1406,96 @@ html[data-theme="dark"] {
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================
+   STORED ACTIVITY REPORT
+========================= */
+
+.stored-activities-section {
+  margin-top: 40px;
+}
+
+.stored-activities-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 30px;
+  margin-bottom: 18px;
+}
+
+.stored-activities-heading h2 {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.stored-activities-heading p {
+  margin: 0;
+  color: var(--secondary-text);
+}
+
+.activity-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+}
+
+.activity-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  background: var(--surface);
+}
+
+.activity-table th,
+.activity-table td {
+  padding: 14px 16px;
+
+  border-bottom: 1px solid #cbd5e1;
+
+  text-align: left;
+  vertical-align: top;
+}
+
+.activity-table th {
+  background: var(--surface-strong);
+  font-weight: 700;
+}
+
+.activity-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.activity-table tbody tr:hover {
+  background: var(--surface-strong);
+}
+
+.dashboard-empty-message {
+  padding: 20px;
+
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+
+  background: var(--surface);
+}
+
+.dashboard-empty-message p {
+  margin: 0;
+}
+
+
+/* =========================
+   STORED ACTIVITY RESPONSIVE
+========================= */
+
+@media (max-width: 600px) {
+  .stored-activities-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .activity-table {
+    min-width: 700px;
+  }
+}
