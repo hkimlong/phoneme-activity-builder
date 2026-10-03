@@ -47,6 +47,30 @@ export default function WordlePage() {
     loadSavedActivities();
   }, []);
 
+  useEffect(() => {
+    const startTime = Date.now();
+
+    return () => {
+      const duration = Math.max(
+        1,
+        Math.round((Date.now() - startTime) / 1000)
+      );
+
+      createUsageEvent({
+        eventType: "PAGE_VIEW",
+        activityType: "WORDLE",
+        page: "/wordle",
+        duration,
+        message: "Wordle page visit",
+      }).catch((error) => {
+        console.error(
+          "Failed to record Wordle page duration:",
+          error
+        );
+      });
+    };
+  }, []);
+
   async function saveWordleActivity() {
     try {
       setSaveMessage("");

@@ -50,6 +50,30 @@ export default function WordSearchPage() {
     loadSavedActivities();
   }, []);
 
+  useEffect(() => {
+    const startTime = Date.now();
+
+    return () => {
+      const duration = Math.max(
+        1,
+        Math.round((Date.now() - startTime) / 1000)
+      );
+
+      createUsageEvent({
+        eventType: "PAGE_VIEW",
+        activityType: "WORD_SEARCH",
+        page: "/word-search",
+        duration,
+        message: "Word Search page visit",
+      }).catch((error) => {
+        console.error(
+          "Failed to record Word Search page duration:",
+          error
+        );
+      });
+    };
+  }, []);
+
   async function deleteSavedActivity() {
     try {
       if (!selectedActivityId) {
