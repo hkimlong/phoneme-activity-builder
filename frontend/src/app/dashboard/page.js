@@ -136,7 +136,7 @@ export default function Dashboard() {
 
         <div className="dashboard-grid">
           <article className="dashboard-card">
-            <h3>Wordle Activities Created</h3>
+            <h3>Wordle Activities Saved</h3>
 
             <p className="dashboard-value">
               {metrics.wordleCreated}
@@ -144,7 +144,7 @@ export default function Dashboard() {
           </article>
 
           <article className="dashboard-card">
-            <h3>Word Search Activities Created</h3>
+            <h3>Word Search Activities Saved</h3>
 
             <p className="dashboard-value">
               {metrics.wordSearchCreated}
@@ -152,7 +152,7 @@ export default function Dashboard() {
           </article>
 
           <article className="dashboard-card">
-            <h3>Wordle Uses</h3>
+            <h3>Wordle HTML Generated</h3>
 
             <p className="dashboard-value">
               {metrics.wordleUsage}
@@ -160,7 +160,7 @@ export default function Dashboard() {
           </article>
 
           <article className="dashboard-card">
-            <h3>Word Search Uses</h3>
+            <h3>Word Search HTML Generated</h3>
 
             <p className="dashboard-value">
               {metrics.wordSearchUsage}
@@ -174,7 +174,7 @@ export default function Dashboard() {
 
         <div className="dashboard-grid">
           <article className="dashboard-card">
-            <h3>Most-Used Activity</h3>
+            <h3>Most Generated Activity</h3>
 
             <p className="dashboard-value dashboard-value-text">
               {formatActivityType(metrics.mostUsedActivityType)}
@@ -191,7 +191,7 @@ export default function Dashboard() {
           </article>
 
           <article className="dashboard-card">
-            <h3>Successful Generations</h3>
+            <h3>Successful HTML Generations</h3>
 
             <p className="dashboard-value">
               {metrics.successfulGenerations}
@@ -199,7 +199,7 @@ export default function Dashboard() {
           </article>
 
           <article className="dashboard-card">
-            <h3>Failed Generations</h3>
+            <h3>Failed HTML Generations</h3>
 
             <p className="dashboard-value">
               {metrics.failedGenerations}
